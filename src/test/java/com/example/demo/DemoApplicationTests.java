@@ -1,11 +1,14 @@
 package com.example.demo;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootApplication
-public class DemoApplication {
-  public static void main(String[] args) {
-    SpringApplication.run(DemoApplication.class, args);
-  }
+@SpringBootTest
+public class DemoApplicationTests {
+
+    @Test
+    void contextLoads() {
+        // test simple pour vérifier que le contexte Spring Boot démarre correctement
+    }
+
 }
