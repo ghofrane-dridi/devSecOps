@@ -1,33 +1,50 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'M3'           // Remplace par le nom exact défini dans Jenkins > Global Tool Configuration
+        jdk 'JDK 17'         // Assure-toi que ce nom est identique à celui dans Jenkins
+    }
+
+    environment {
+        SONAR_TOKEN = credentials('sonar-token') // Assure-toi d’avoir créé ce credential dans Jenkins
+    }
+
     stages {
-        stage('GIT Checkout') {
+        stage('Checkout') {
             steps {
-                echo 'Clonage du projet depuis GitHub'
-                git branch: 'main', url: 'https://github.com/ghofrane-dridi/devSecOps.git '
+                git branch: 'main', url: 'https://github.com/ghofrane-dridi/devSecOps.git'
             }
         }
 
-        stage('Build Maven') {
+        stage('Build') {
             steps {
-                echo 'Compilation avec Maven'
-                sh 'mvn clean package'
+                sh 'mvn clean install -DskipTests'
             }
         }
 
-        stage('Tests Unitaires') {
+        stage('Test') {
             steps {
-                echo 'Exécution des tests'
                 sh 'mvn test'
+            }
+        }
+
+        stage('Publish Test Results') {
+            steps {
+                junit '**/target/surefire-reports/*.xml'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                echo 'Analyse de qualité avec SonarQube'
                 withSonarQubeEnv('SonarQube') {
-                    sh 'mvn sonar:sonar -Dsonar.login=TON_TOKEN_ICI'
+                    sh """
+                        mvn verify sonar:sonar \
+                          -Dsonar.projectKey=devsecops \
+                          -Dsonar.host.url=http://localhost:9000 \
+                          -Dsonar.login=${SONAR_TOKEN} \
+                          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                    """
                 }
             }
         }
@@ -35,7 +52,10 @@ pipeline {
 
     post {
         always {
-            echo 'Build terminé'
+            echo '✅ Pipeline terminé.'
+        }
+        failure {
+            echo '❌ Le pipeline a échoué. Vérifie les logs.'
         }
     }
 }
