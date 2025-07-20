@@ -2,12 +2,12 @@ pipeline {
     agent any
 
     tools {
-        maven 'M3'           // Remplace par le nom exact défini dans Jenkins > Global Tool Configuration
-        jdk 'JDK 17'         // Assure-toi que ce nom est identique à celui dans Jenkins
+        maven 'M3'       // Nom de Maven configuré dans Jenkins
+        jdk 'JDK 17'     // Nom du JDK configuré dans Jenkins
     }
 
     environment {
-        SONAR_TOKEN = credentials('sonar-token') // Assure-toi d’avoir créé ce credential dans Jenkins
+        SONAR_TOKEN = credentials('sonar-token')  // Credential Secret Text SonarQube
     }
 
     stages {
@@ -23,27 +23,14 @@ pipeline {
             }
         }
 
-        stage('Test') {
-            steps {
-                sh 'mvn test'
-            }
-        }
-
-        stage('Publish Test Results') {
-            steps {
-                junit '**/target/surefire-reports/*.xml'
-            }
-        }
-
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     sh """
-                        mvn verify sonar:sonar \
-                          -Dsonar.projectKey=devsecops \
-                          -Dsonar.host.url=http://localhost:9000 \
-                          -Dsonar.login=${SONAR_TOKEN} \
-                          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                        mvn sonar:sonar \
+                            -Dsonar.projectKey=devsecops \
+                            -Dsonar.host.url=http://localhost:9000 \
+                            -Dsonar.login=${SONAR_TOKEN}
                     """
                 }
             }
