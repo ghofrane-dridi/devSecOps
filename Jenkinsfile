@@ -2,37 +2,44 @@ pipeline {
     agent any
 
     tools {
-        maven 'M3'       // Nom Maven configuré dans Jenkins (ex : M3)
-        jdk 'JDK 17'     // Nom JDK configuré dans Jenkins (ex : JDK 17)
+        maven 'M3'       // Nom de l'installation Maven dans Jenkins (ex: M3)
+        jdk 'JDK 17'     // Nom de l'installation JDK dans Jenkins (ex: JDK 17)
     }
 
     environment {
-        SONAR_TOKEN = credentials('sonar-token')  // Token SonarQube (Secret Text)
-        JAVA_HOME = tool name: 'JDK 17', type: 'jdk'  // Définit JAVA_HOME correctement
+        // Utilisation d'une credential de type "Secret text" avec l'ID 'sonar-token'
+        SONAR_TOKEN = credentials('sonar-token')
+
+        // Configuration SonarQube (optionnel mais utile)
+        SONAR_HOST_URL = 'http://localhost:9000'
+        JAVA_HOME = tool 'JDK 17'
         PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/ghofrane-dridi/devSecOps.git'
+                // Checkout depuis GitHub
+                git branch: 'main', url: 'https://github.com/ghofrane-dridi/devSecOps.git '
             }
         }
 
         stage('Build') {
             steps {
+                // Build Maven sans tests
                 sh 'mvn clean install -DskipTests'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
+                // Assurez-vous que 'SonarQube' est bien configuré dans Jenkins
                 withSonarQubeEnv('SonarQube') {
                     sh """
                         mvn sonar:sonar \
                             -Dsonar.projectKey=devsecops \
-                            -Dsonar.host.url=http://localhost:9000 \
-                            -Dsonar.login=${SONAR_TOKEN}
+                            -Dsonar.host.url=\${SONAR_HOST_URL} \
+                            -Dsonar.login=\${SONAR_TOKEN}
                     """
                 }
             }
@@ -40,11 +47,14 @@ pipeline {
     }
 
     post {
-        always {
-            echo '✅ Pipeline terminé.'
+        success {
+            echo '✅ Pipeline terminé avec succès.'
         }
         failure {
-            echo '❌ Le pipeline a échoué. Vérifie les logs.'
+            echo '❌ Le pipeline a échoué. Vérifiez les logs pour plus de détails.'
+        }
+        always {
+            echo '🏁 Fin du pipeline.'
         }
     }
 }
