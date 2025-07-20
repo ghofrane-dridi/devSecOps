@@ -2,12 +2,14 @@ pipeline {
     agent any
 
     tools {
-        maven 'M3'       // Nom de Maven configuré dans Jenkins
-        jdk 'JDK 17'     // Nom du JDK configuré dans Jenkins
+        maven 'M3'       // Nom Maven configuré dans Jenkins (ex : M3)
+        jdk 'JDK 17'     // Nom JDK configuré dans Jenkins (ex : JDK 17)
     }
 
     environment {
-        SONAR_TOKEN = credentials('sonar-token')  // Credential Secret Text SonarQube
+        SONAR_TOKEN = credentials('sonar-token')  // Token SonarQube (Secret Text)
+        JAVA_HOME = tool name: 'JDK 17', type: 'jdk'  // Définit JAVA_HOME correctement
+        PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
     }
 
     stages {
