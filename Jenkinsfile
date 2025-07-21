@@ -16,45 +16,44 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/ghofrane-dridi/devSecOps.git'
+                git branch: 'main', url: 'https://github.com/ghofrane-dridi/devSecOps.git '
             }
         }
 
         stage('Build with Tests') {
             steps {
-                // Lancer tout en une fois pour que Maven gère bien les phases (évite doublons)
+                echo '🏗️ Building project and running tests...'
                 sh 'mvn clean verify'
             }
         }
 
         stage('Generate JaCoCo Report') {
             steps {
+                echo '📊 Generating JaCoCo coverage report...'
                 sh 'mvn jacoco:report'
             }
         }
 
-        stage('Publish JaCoCo Report (Optional)') {
+        stage('Publish JaCoCo Report') {
             steps {
-                jacoco() // requires Jenkins JaCoCo plugin installed
+                echo '📈 Publishing JaCoCo coverage report...'
+                jacoco() // Requires Jenkins JaCoCo plugin
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') {
-                    sh """
-                        mvn sonar:sonar \
-                            -Dsonar.projectKey=demo \
-                            -Dsonar.host.url=${SONAR_HOST_URL} \
-                            -Dsonar.login=${SONAR_TOKEN}
-                    """
+                echo '🔍 Running SonarQube analysis...'
+                withSonarQubeEnv('SonarQube') { // Ensure this name matches your SonarQube server name in Jenkins
+                    sh 'mvn sonar:sonar'
                 }
             }
         }
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 1, unit: 'MINUTES') {
+                echo '🛡️ Waiting for SonarQube Quality Gate...'
+                timeout(time: 2, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
