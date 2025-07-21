@@ -48,8 +48,8 @@ pipeline {
                 }
             }
         }
+    }  // <-- Fermeture du bloc stages ici
 
-     
     post {
         success {
             echo '✅ Pipeline completed successfully!'
