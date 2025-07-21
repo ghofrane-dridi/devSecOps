@@ -19,12 +19,9 @@
     </parent>
 
     <properties>
-        <!-- Compiler pour Java 17 -->
+        <!-- Java version -->
         <java.version>17</java.version>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        
-        <!-- Version du plugin JaCoCo -->
+        <!-- JaCoCo version -->
         <jacoco.version>0.8.10</jacoco.version>
     </properties>
 
@@ -102,15 +99,18 @@
                 <version>4.0.0.4121</version>
             </plugin>
 
-            <!-- Compiler Plugin - Compatible Java 17 + Nexus -->
+            <!-- Compiler Plugin - Java 17 sans --release -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.10.1</version>
                 <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
-                    <!-- On évite <release> car il peut poser problème si Maven est lancé dans un contexte Java 8 -->
+                    <source>17</source>
+                    <target>17</target>
+                    <compilerArgs>
+                        <arg>-Xlint:unchecked</arg>
+                        <arg>-Xlint:deprecation</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
 
@@ -156,7 +156,7 @@
         </plugins>
     </build>
 
-    <!-- Déploiement vers Nexus : IMPORTANT - l'ID doit être "deploymentRepo" -->
+    <!-- Déploiement vers Nexus -->
     <distributionManagement>
         <repository>
             <id>deploymentRepo</id>
