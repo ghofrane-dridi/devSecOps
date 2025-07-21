@@ -2,14 +2,14 @@ pipeline {
     agent any
 
     tools {
-        maven 'M3'         // Le nom de Maven configuré dans Jenkins (Manage Jenkins > Global Tool Configuration)
-        jdk 'JDK 17'       // Le nom du JDK configuré dans Jenkins
+        maven 'M3'         // Nom Maven configuré dans Jenkins
+        jdk 'JDK 17'       // Nom JDK configuré dans Jenkins
     }
 
     environment {
-        GITHUB_TOKEN = credentials('github-token')      // ID du token GitHub dans Jenkins
-        SONAR_TOKEN  = credentials('sonar-token')       // ID du token SonarQube dans Jenkins
-        SONAR_HOST_URL = 'http://localhost:9000'        // URL du serveur SonarQube
+        GITHUB_TOKEN   = credentials('github-token')      // ID du token GitHub
+        SONAR_TOKEN    = credentials('sonar-token')       // ID du token SonarQube
+        SONAR_HOST_URL = 'http://localhost:9000'          // URL SonarQube
     }
 
     stages {
@@ -38,6 +38,9 @@ pipeline {
                         -Dsonar.login=$SONAR_TOKEN
                     """
                 }
+
+                // Alternative : exécution directe sans withSonarQubeEnv (optionnelle)
+                sh "mvn sonar:sonar -Dsonar.host.url=http://localhost:9000/ -Dsonar.token=${SONAR_TOKEN}"
             }
         }
 
