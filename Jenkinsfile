@@ -2,73 +2,73 @@ pipeline {
     agent any
 
     tools {
-        maven 'M3'       // Maven tool installed in Jenkins
-        jdk 'JDK 17'     // JDK 17 installed in Jenkins
+        maven 'M3'       // Nom du Maven configuré dans Jenkins
+        jdk 'JDK 17'     // Nom du JDK configuré dans Jenkins
     }
 
     environment {
-        SONAR_TOKEN = credentials('sonar-token')  // Secret text credential with SonarQube token
-        SONAR_HOST_URL = 'http://localhost:9000'  // Your SonarQube instance
-        JAVA_HOME = tool 'JDK 17'
-        PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
+        SONAR_TOKEN = credentials('sonar-token') // Jenkins Credentials ID
+        SONAR_HOST_URL = 'http://localhost:9000' // URL de SonarQube
     }
 
     stages {
+
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/ghofrane-dridi/devSecOps.git '
+                git branch: 'main', url: 'https://github.com/ton-compte/ton-projet.git'
             }
         }
 
-        stage('Build with Tests') {
+        stage('Build') {
             steps {
-                echo '🏗️ Building project and running tests...'
-                sh 'mvn clean verify'
+                sh 'mvn clean install -DskipTests'
             }
         }
 
-        stage('Generate JaCoCo Report') {
+        stage('Test et Couverture') {
             steps {
-                echo '📊 Generating JaCoCo coverage report...'
-                sh 'mvn jacoco:report'
+                sh 'mvn test'
             }
         }
 
-        stage('Publish JaCoCo Report') {
+        stage('Analyse SonarQube') {
             steps {
-                echo '📈 Publishing JaCoCo coverage report...'
-                jacoco() // Requires Jenkins JaCoCo plugin
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            steps {
-                echo '🔍 Running SonarQube analysis...'
-                withSonarQubeEnv('SonarQube') { // Ensure this name matches your SonarQube server name in Jenkins
-                    sh 'mvn sonar:sonar'
+                withSonarQubeEnv('SonarQube') {
+                    sh '''
+                        mvn sonar:sonar \
+                            -Dsonar.projectKey=ton-projet \
+                            -Dsonar.host.url=${SONAR_HOST_URL} \
+                            -Dsonar.login=${SONAR_TOKEN}
+                    '''
                 }
             }
         }
 
-        stage('Quality Gate') {
+        stage('Qualité Code - Attente Sonar') {
             steps {
-                echo '🛡️ Waiting for SonarQube Quality Gate...'
-                timeout(time: 2, unit: 'MINUTES') {
+                timeout(time: 1, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
         }
+
+        stage('Déploiement Nexus') {
+            steps {
+                sh 'mvn deploy'
+            }
+        }
+
     }
 
     post {
+        always {
+            echo 'Pipeline terminé.'
+        }
         success {
-            echo '✅ Pipeline terminé avec succès.'
+            echo 'Build et analyse réussies.'
         }
         failure {
-            echo '❌ Le pipeline a échoué. Vérifiez les logs pour plus de détails.'
-        }
-        always {
-            echo '🏁 Fin du pipeline.'
+            echo 'Échec du pipeline.'
         }
     }
 }
