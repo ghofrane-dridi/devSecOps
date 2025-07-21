@@ -2,13 +2,13 @@ pipeline {
     agent any
 
     tools {
-        maven 'M3'         // Nom Maven configuré dans Jenkins
-        jdk 'JDK 17'       // Nom JDK configuré dans Jenkins
+        maven 'M3'
+        jdk 'JDK 17'
     }
 
     environment {
-        SONAR_TOKEN    = credentials('sonar-token')       // ID du token SonarQube
-        SONAR_HOST_URL = 'http://localhost:9000'          // URL SonarQube
+        SONAR_TOKEN    = credentials('sonar-token')
+        SONAR_HOST_URL = 'http://localhost:9000'
     }
 
     stages {
@@ -19,7 +19,7 @@ pipeline {
                     branches: [[name: '*/main']],
                     userRemoteConfigs: [[
                         url: 'https://github.com/ghofrane-dridi/devSecOps.git',
-                        credentialsId: 'github-creds'  // Ton ID credentials Jenkins pour GitHub
+                        credentialsId: 'github-creds'
                     ]]
                 ])
             }
@@ -36,12 +36,15 @@ pipeline {
             steps {
                 echo '🔍 Running SonarQube analysis...'
                 withSonarQubeEnv('SonarQube') {
-                    sh """
-                        mvn sonar:sonar \
-                        -Dsonar.projectKey=devSecOps \
-                        -Dsonar.host.url=$SONAR_HOST_URL \
-                        -Dsonar.login=$SONAR_TOKEN
-                    """
+                    // Passer les variables en env pour éviter interpolation Groovy directe
+                    withEnv(["SONAR_PROJECT_KEY=devsecops"]) {
+                        sh '''
+                            mvn sonar:sonar \
+                              -Dsonar.projectKey=$SONAR_PROJECT_KEY \
+                              -Dsonar.host.url=$SONAR_HOST_URL \
+                              -Dsonar.token=$SONAR_TOKEN
+                        '''
+                    }
                 }
             }
         }
