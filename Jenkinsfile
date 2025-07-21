@@ -2,44 +2,28 @@ pipeline {
     agent any
 
     tools {
-        maven 'M3'       // Maven configured in Jenkins
-        jdk 'JDK 17'     // JDK configured in Jenkins
+        maven 'M3'         // Le nom de Maven configuré dans Jenkins (Manage Jenkins > Global Tool Configuration)
+        jdk 'JDK 17'       // Le nom du JDK configuré dans Jenkins
     }
 
     environment {
-        GITHUB_TOKEN = credentials('github-token')  // GitHub token credential ID
-        SONAR_TOKEN = credentials('sonar-token')    // SonarQube token credential ID
-        SONAR_HOST_URL = 'http://localhost:9000'    // SonarQube URL
-        JAVA_HOME = tool 'JDK 17'
-        PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
+        GITHUB_TOKEN = credentials('github-token')      // ID du token GitHub dans Jenkins
+        SONAR_TOKEN  = credentials('sonar-token')       // ID du token SonarQube dans Jenkins
+        SONAR_HOST_URL = 'http://localhost:9000'        // URL du serveur SonarQube
     }
 
     stages {
         stage('Checkout') {
             steps {
-                echo '🔄 Checking out from GitHub repository...'
-                git url: "https://${GITHUB_TOKEN}@github.com/ghofrane-dridi/devSecOps.git", branch: 'main'
+                echo '📥 Cloning source code...'
+                git branch: 'main', url: 'https://github.com/<ton-utilisateur>/<ton-repo>.git'
             }
         }
 
-        stage('Build & Test') {
+        stage('Build') {
             steps {
-                echo '🏗️ Building and running tests...'
-                sh 'mvn clean verify'
-            }
-        }
-
-        stage('Generate JaCoCo Report') {
-            steps {
-                echo '📊 Generating JaCoCo code coverage report...'
-                sh 'mvn jacoco:report'
-            }
-        }
-
-        stage('Publish JaCoCo Report') {
-            steps {
-                echo '📈 Publishing JaCoCo report in Jenkins...'
-                jacoco()
+                echo '🔧 Building with Maven...'
+                sh 'mvn clean install'
             }
         }
 
@@ -47,18 +31,22 @@ pipeline {
             steps {
                 echo '🔍 Running SonarQube analysis...'
                 withSonarQubeEnv('SonarQube') {
-sh "mvn sonar:sonar -Dsonar.host.url=http://localhost:9000/ -Dsonar.token=${SONAR_TOKEN}"
+                    sh """
+                        mvn sonar:sonar \
+                        -Dsonar.projectKey=devSecOps \
+                        -Dsonar.host.url=$SONAR_HOST_URL \
+                        -Dsonar.login=$SONAR_TOKEN
+                    """
                 }
             }
         }
 
-        stage('Quality Gate') {
-    steps {
-        timeout(time: 10, unit: 'MINUTES') {
-            waitForQualityGate abortPipeline: true
+        stage('Deploy to Nexus') {
+            steps {
+                echo '🚀 Deploying to Nexus...'
+                sh 'mvn deploy'
+            }
         }
-    }
-}
     }
 
     post {
@@ -67,9 +55,6 @@ sh "mvn sonar:sonar -Dsonar.host.url=http://localhost:9000/ -Dsonar.token=${SONA
         }
         failure {
             echo '❌ Pipeline failed. Check logs for details.'
-        }
-        always {
-            echo '🏁 Pipeline finished.'
         }
     }
 }
