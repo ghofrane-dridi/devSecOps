@@ -16,39 +16,46 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/ghofrane-dridi/devSecOps.git '
+                git branch: 'main', url: 'https://github.com/ghofrane-dridi/devSecOps.git'
             }
         }
 
         stage('Build with Tests') {
             steps {
-                sh 'mvn clean install -DskipTests' // Build first
-                sh 'mvn test'                      // Run tests to generate jacoco.exec
+                // Lancer tout en une fois pour que Maven gère bien les phases (évite doublons)
+                sh 'mvn clean verify'
             }
         }
 
         stage('Generate JaCoCo Report') {
             steps {
-                sh 'mvn jacoco:report' // Generate HTML report
+                sh 'mvn jacoco:report'
             }
         }
 
         stage('Publish JaCoCo Report (Optional)') {
             steps {
-                jacoco() // Publish report in Jenkins UI (requires plugin)
+                jacoco() // requires Jenkins JaCoCo plugin installed
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') { // Make sure this name matches Jenkins config
+                withSonarQubeEnv('SonarQube') {
                     sh """
                         mvn sonar:sonar \
                             -Dsonar.projectKey=demo \
-                            -Dsonar.host.url=\${SONAR_HOST_URL} \
-                            -Dsonar.login=\${SONAR_TOKEN} \
-                            -Djacoco.reportPath=target/site/jacoco/index.html
+                            -Dsonar.host.url=${SONAR_HOST_URL} \
+                            -Dsonar.login=${SONAR_TOKEN}
                     """
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 1, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
