@@ -49,14 +49,7 @@ pipeline {
             }
         }
 
-        stage('Deploy to Nexus') {
-            steps {
-                echo '🚀 Deploying to Nexus...'
-                sh 'mvn deploy'
-            }
-        }
-    }
-
+     
     post {
         success {
             echo '✅ Pipeline completed successfully!'
