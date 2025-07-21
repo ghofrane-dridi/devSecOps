@@ -7,7 +7,6 @@ pipeline {
     }
 
     environment {
-        GITHUB_TOKEN   = credentials('github-token')      // ID du token GitHub
         SONAR_TOKEN    = credentials('sonar-token')       // ID du token SonarQube
         SONAR_HOST_URL = 'http://localhost:9000'          // URL SonarQube
     }
@@ -16,7 +15,13 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo '📥 Cloning source code...'
-                git branch: 'main', url: 'https://github.com/<ton-utilisateur>/<ton-repo>.git'
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/ghofrane-dridi/devSecOps.git',
+                        credentialsId: 'github-creds'  // Ton ID credentials Jenkins pour GitHub
+                    ]]
+                ])
             }
         }
 
@@ -38,9 +43,6 @@ pipeline {
                         -Dsonar.login=$SONAR_TOKEN
                     """
                 }
-
-                // Alternative : exécution directe sans withSonarQubeEnv (optionnelle)
-                sh "mvn sonar:sonar -Dsonar.host.url=http://localhost:9000/ -Dsonar.token=${SONAR_TOKEN}"
             }
         }
 
