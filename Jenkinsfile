@@ -7,9 +7,9 @@ pipeline {
     }
 
     environment {
-        GITHUB_TOKEN = credentials('github-token')  // Your GitHub token credential ID in Jenkins
-        SONAR_TOKEN = credentials('sonar-token')    // Your SonarQube token credential ID
-        SONAR_HOST_URL = 'http://localhost:9000'    // SonarQube server URL
+        GITHUB_TOKEN = credentials('github-token')  // GitHub token credential ID
+        SONAR_TOKEN = credentials('sonar-token')    // SonarQube token credential ID
+        SONAR_HOST_URL = 'http://localhost:9000'    // SonarQube URL
         JAVA_HOME = tool 'JDK 17'
         PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
     }
@@ -18,7 +18,6 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo '🔄 Checking out from GitHub repository...'
-                // Use token for Git clone with HTTPS
                 git url: "https://${GITHUB_TOKEN}@github.com/ghofrane-dridi/devSecOps.git", branch: 'main'
             }
         }
@@ -47,8 +46,8 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 echo '🔍 Running SonarQube analysis...'
-                withSonarQubeEnv('SonarQube') {  // Make sure the name matches your Jenkins SonarQube server config
-                    sh 'mvn sonar:sonar -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.login=${SONAR_TOKEN}'
+                withSonarQubeEnv('SonarQube') {
+                    sh "mvn sonar:sonar -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.login=${SONAR_TOKEN}"
                 }
             }
         }
