@@ -9,17 +9,17 @@ pipeline {
     environment {
         SONAR_TOKEN    = credentials('sonar-token')
         SONAR_HOST_URL = 'http://localhost:9000'
-        NEXUS_URL      = 'http://localhost:8181/repository/maven-releases/'
     }
 
     stages {
         stage('Checkout') {
             steps {
                 echo '📥 Cloning source code...'
-                checkout([$class: 'GitSCM',
+                checkout([
+                    $class: 'GitSCM',
                     branches: [[name: '*/main']],
                     userRemoteConfigs: [[
-                        url: 'https://github.com/ghofrane-dridi/devSecOps.git',
+                        url: 'https://github.com/ghofrane-dridi/devSecOps.git ',
                         credentialsId: 'github-creds'
                     ]]
                 ])
@@ -29,7 +29,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo '🔧 Building with Maven...'
-                sh 'mvn clean install'
+                sh 'mvn clean install -s /var/lib/jenkins/.m2/settings.xml'
             }
         }
 
@@ -37,14 +37,13 @@ pipeline {
             steps {
                 echo '🔍 Running SonarQube analysis...'
                 withSonarQubeEnv('SonarQube') {
-                    withEnv(["SONAR_PROJECT_KEY=devsecops"]) {
-                        sh '''
-                            mvn sonar:sonar \
-                              -Dsonar.projectKey=$SONAR_PROJECT_KEY \
-                              -Dsonar.host.url=$SONAR_HOST_URL \
-                              -Dsonar.login=$SONAR_TOKEN
-                        '''
-                    }
+                    sh """
+                        mvn sonar:sonar \
+                          -Dsonar.projectKey=devsecops \
+                          -Dsonar.host.url=$SONAR_HOST_URL \
+                          -Dsonar.token=$SONAR_TOKEN \
+                          -s /var/lib/jenkins/.m2/settings.xml
+                    """
                 }
             }
         }
@@ -52,14 +51,7 @@ pipeline {
         stage('Deploy to Nexus') {
             steps {
                 echo '🚀 Deploying artifact to Nexus...'
-                withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASSWORD')]) {
-                    sh '''
-                        mvn deploy \
-                          -Dnexus.username=$NEXUS_USER \
-                          -Dnexus.password=$NEXUS_PASSWORD \
-                          -DaltDeploymentRepository=nexus::default::$NEXUS_URL
-                    '''
-                }
+                sh 'mvn deploy -s /var/lib/jenkins/.m2/settings.xml'
             }
         }
     }
