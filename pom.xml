@@ -156,15 +156,16 @@
         </plugins>
     </build>
 
-    <distributionManagement>
-        <repository>
-            <id>deploymentRepo</id>
-            <url>http://localhost:8081/repository/maven-releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>deploymentRepo</id>
-            <url>http://localhost:8081/repository/maven-snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
+  <distributionManagement>
+    <repository>
+        <id>deploymentRepo</id>
+        <url>http://localhost:8181/repository/maven-releases/</url>
+    </repository>
+    <snapshotRepository>
+        <id>deploymentRepo</id>
+        <url>http://localhost:8181/repository/maven-snapshots/</url>
+    </snapshotRepository>
+</distributionManagement>
+
 
 </project>
