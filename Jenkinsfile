@@ -9,6 +9,9 @@ pipeline {
     environment {
         SONAR_TOKEN    = credentials('sonar-token')
         SONAR_HOST_URL = 'http://localhost:9000'
+        NEXUS_USER     = credentials('nexus-creds').username
+        NEXUS_PASSWORD = credentials('nexus-creds').password
+        NEXUS_URL      = 'http://localhost:8181/repository/maven-releases/'  // adapte selon ton repo Nexus
     }
 
     stages {
@@ -36,19 +39,30 @@ pipeline {
             steps {
                 echo '🔍 Running SonarQube analysis...'
                 withSonarQubeEnv('SonarQube') {
-                    // Passer les variables en env pour éviter interpolation Groovy directe
                     withEnv(["SONAR_PROJECT_KEY=devsecops"]) {
                         sh '''
                             mvn sonar:sonar \
                               -Dsonar.projectKey=$SONAR_PROJECT_KEY \
                               -Dsonar.host.url=$SONAR_HOST_URL \
-                              -Dsonar.token=$SONAR_TOKEN
+                              -Dsonar.login=$SONAR_TOKEN
                         '''
                     }
                 }
             }
         }
-    }  // <-- Fermeture du bloc stages ici
+
+        stage('Deploy to Nexus') {
+            steps {
+                echo '🚀 Deploying artifact to Nexus...'
+                sh '''
+                    mvn deploy \
+                      -Dnexus.username=$NEXUS_USER \
+                      -Dnexus.password=$NEXUS_PASSWORD \
+                      -DaltDeploymentRepository=nexus::default::$NEXUS_URL
+                '''
+            }
+        }
+    }
 
     post {
         success {
