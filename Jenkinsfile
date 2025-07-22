@@ -9,9 +9,7 @@ pipeline {
     environment {
         SONAR_TOKEN    = credentials('sonar-token')
         SONAR_HOST_URL = 'http://localhost:9000'
-        NEXUS_USER     = credentials('nexus-creds').username
-        NEXUS_PASSWORD = credentials('nexus-creds').password
-        NEXUS_URL      = 'http://localhost:8181/repository/maven-releases/'  // adapte selon ton repo Nexus
+        NEXUS_URL      = 'http://localhost:8181/repository/maven-releases/'
     }
 
     stages {
@@ -54,12 +52,14 @@ pipeline {
         stage('Deploy to Nexus') {
             steps {
                 echo '🚀 Deploying artifact to Nexus...'
-                sh '''
-                    mvn deploy \
-                      -Dnexus.username=$NEXUS_USER \
-                      -Dnexus.password=$NEXUS_PASSWORD \
-                      -DaltDeploymentRepository=nexus::default::$NEXUS_URL
-                '''
+                withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASSWORD')]) {
+                    sh '''
+                        mvn deploy \
+                          -Dnexus.username=$NEXUS_USER \
+                          -Dnexus.password=$NEXUS_PASSWORD \
+                          -DaltDeploymentRepository=nexus::default::$NEXUS_URL
+                    '''
+                }
             }
         }
     }
