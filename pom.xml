@@ -89,6 +89,20 @@
 
     <build>
         <plugins>
+            <!-- Plugin Spring Boot pour créer un jar exécutable -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>3.3.4</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
             <!-- SonarQube plugin -->
             <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
