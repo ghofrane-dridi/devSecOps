@@ -28,8 +28,8 @@ pipeline {
 
         stage('Build') {
             steps {
-                echo '🔧 Building with Maven...'
-                sh 'mvn clean install -s /var/lib/jenkins/.m2/settings.xml'
+                echo '🔧 Building with Maven and generating JaCoCo report...'
+                sh 'mvn clean verify jacoco:report -s /var/lib/jenkins/.m2/settings.xml'
             }
         }
 
