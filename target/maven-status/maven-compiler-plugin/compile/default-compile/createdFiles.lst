@@ -1,1 +1,5 @@
+com/example/devsecops/service/UserService.class
+com/example/demo/DemoApplication.class
+com/example/devsecops/model/User.class
+com/example/devsecops/repository/UserRepository.class
 com/example/devsecops/service/CalculatorService.class
