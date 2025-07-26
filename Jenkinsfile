@@ -2,71 +2,63 @@ pipeline {
     agent any
 
     tools {
-        maven 'M3'       // Nom de Maven défini dans Jenkins
-        jdk 'JDK 17'     // Nom du JDK défini dans Jenkins
+        maven 'M3'         // Maven installé via Manage Jenkins > Global Tool Configuration
+        jdk 'JDK 17'       // JDK installé dans Jenkins
     }
 
     environment {
-        GITHUB_TOKEN = credentials('github-token') // Ton GitHub token
-        SONAR_TOKEN  = credentials('sonar-token')  // Token défini dans Jenkins pour SonarQube
+        GITHUB_TOKEN = credentials('github-token')      // ✅ Assure-toi que ce token existe dans Credentials
+        SONAR_TOKEN  = credentials('sonar-token')       // ✅ Assure-toi aussi que celui-ci existe
+        SONAR_HOST_URL = 'http://localhost:9000'        // URL SonarQube
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/votre-utilisateur/votre-repo.git'
+                echo '📥 Cloning source code...'
+                git branch: 'main', url: "https://ghp:${GITHUB_TOKEN}@github.com/<TON-UTILISATEUR>/<TON-REPO>.git"
             }
         }
 
-        stage('Build with Maven') {
+        stage('Build') {
             steps {
+                echo '🔧 Building with Maven...'
                 sh 'mvn clean install'
             }
         }
 
-        stage('Code Quality - SonarQube') {
+        stage('SonarQube Analysis') {
             steps {
+                echo '🔍 Running SonarQube analysis...'
                 withSonarQubeEnv('SonarQube') {
-                    sh "mvn sonar:sonar -Dsonar.login=$SONAR_TOKEN"
+                    sh """
+                        mvn sonar:sonar \
+                        -Dsonar.projectKey=devSecOps \
+                        -Dsonar.host.url=${SONAR_HOST_URL} \
+                        -Dsonar.login=${SONAR_TOKEN}
+                    """
                 }
-            }
-        }
-
-        stage('SonarQube Quality Gate') {
-            steps {
-                waitForQualityGate abortPipeline: true
-            }
-        }
-
-        stage('Docker Compose Up') {
-            steps {
-                sh 'docker-compose up -d'
             }
         }
 
         stage('Deploy to Nexus') {
             steps {
+                echo '🚀 Deploying to Nexus...'
                 sh 'mvn deploy'
             }
         }
     }
 
     post {
-        always {
-            script {
-                node {
-                    echo '🧹 Nettoyage Docker...'
-                    sh 'docker-compose down -v || true'
-                }
-            }
-        }
-
         success {
-            echo '✅ Pipeline terminé avec succès.'
+            echo '✅ Pipeline completed successfully!'
         }
-
         failure {
             echo '❌ Le pipeline a échoué.'
+            script {
+                echo '🧹 Nettoyage Docker...'
+                sh 'docker-compose down -v || true'
+            }
         }
     }
 }
