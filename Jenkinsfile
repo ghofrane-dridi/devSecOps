@@ -2,25 +2,24 @@ pipeline {
     agent any
 
     tools {
-        maven 'M3'       // Maven configuré dans Jenkins (Global Tools)
-        jdk 'JDK 17'     // JDK configuré dans Jenkins (Global Tools)
+        maven 'M3'         // Maven installé dans Jenkins (Manage Jenkins > Global Tool Configuration)
+        jdk 'JDK 17'       // JDK installé dans Jenkins
     }
 
     environment {
-        GITHUB_TOKEN    = credentials('github-token')      // Secret text GitHub
-        SONAR_TOKEN     = credentials('sonar-token')       // Secret text SonarQube
-        SONAR_HOST_URL  = 'http://localhost:9000'          // URL de SonarQube
-        JAVA_HOME       = tool('JDK 17')
-        PATH            = "${JAVA_HOME}/bin:${env.PATH}"
+        JAVA_HOME        = tool('JDK 17')
+        PATH             = "${JAVA_HOME}/bin:${env.PATH}"
+        GITHUB_TOKEN     = credentials('github-token')      // ID du secret GitHub (Secret Text dans Jenkins)
+        SONAR_TOKEN      = credentials('sonar-token')       // ID du token SonarQube
+        SONAR_HOST_URL   = 'http://localhost:9000'          // L'URL de ton serveur SonarQube
     }
 
     stages {
         stage('Checkout') {
             steps {
                 echo '🔄 Clonage du dépôt GitHub...'
-                git credentialsId: 'github-token',
-                    url: "https://ghofrane-dridi:${GITHUB_TOKEN}@github.com/ghofrane-dridi/devSecOps.git",
-                    branch: 'main'
+                git branch: 'main',
+                    url: "https://ghofrane-dridi:${GITHUB_TOKEN}@github.com/ghofrane-dridi/devSecOps.git"
             }
         }
 
@@ -40,7 +39,7 @@ pipeline {
 
         stage('Publish JaCoCo Report') {
             steps {
-                echo '📈 Publication du rapport JaCoCo...'
+                echo '📈 Publication du rapport JaCoCo dans Jenkins...'
                 jacoco()
             }
         }
@@ -61,23 +60,30 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                echo '🛡️ Vérification de la Quality Gate...'
+                echo '🛡️ Vérification de la Quality Gate SonarQube...'
                 timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
+            }
+        }
+
+        stage('Deploy to Nexus') {
+            steps {
+                echo '🚀 Déploiement de l’artefact vers Nexus...'
+                sh 'mvn deploy'
             }
         }
     }
 
     post {
         success {
-            echo '✅ Pipeline exécuté avec succès.'
+            echo '✅ Pipeline terminé avec succès.'
         }
         failure {
-            echo '❌ Le pipeline a échoué. Consultez les logs.'
+            echo '❌ Échec du pipeline. Consultez les erreurs.'
         }
         aborted {
-            echo '⚠️ Pipeline interrompu (aborted).'
+            echo '⚠️ Pipeline interrompu manuellement.'
         }
         always {
             echo '🏁 Fin du pipeline.'
