@@ -2,34 +2,52 @@ pipeline {
     agent any
 
     tools {
-        maven 'M3'         // Maven installé via Manage Jenkins > Global Tool Configuration
-        jdk 'JDK 17'       // JDK installé dans Jenkins
+        maven 'M3'       // Maven configuré dans Jenkins (Global Tools)
+        jdk 'JDK 17'     // JDK configuré dans Jenkins (Global Tools)
     }
 
     environment {
-        GITHUB_TOKEN = credentials('github-token')      // ✅ Assure-toi que ce token existe dans Credentials
-        SONAR_TOKEN  = credentials('sonar-token')       // ✅ Assure-toi aussi que celui-ci existe
-        SONAR_HOST_URL = 'http://localhost:9000'        // URL SonarQube
+        GITHUB_TOKEN    = credentials('github-token')      // Secret text GitHub
+        SONAR_TOKEN     = credentials('sonar-token')       // Secret text SonarQube
+        SONAR_HOST_URL  = 'http://localhost:9000'          // URL de SonarQube
+        JAVA_HOME       = tool('JDK 17')
+        PATH            = "${JAVA_HOME}/bin:${env.PATH}"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                echo '📥 Cloning source code...'
-                git branch: 'main', url: "https://ghp:${GITHUB_TOKEN}@github.com/<TON-UTILISATEUR>/<TON-REPO>.git"
+                echo '🔄 Clonage du dépôt GitHub...'
+                git credentialsId: 'github-token',
+                    url: "https://ghofrane-dridi:${GITHUB_TOKEN}@github.com/ghofrane-dridi/devSecOps.git",
+                    branch: 'main'
             }
         }
 
-        stage('Build') {
+        stage('Build & Test') {
             steps {
-                echo '🔧 Building with Maven...'
-                sh 'mvn clean install'
+                echo '🏗️ Compilation et tests Maven...'
+                sh 'mvn clean verify'
+            }
+        }
+
+        stage('JaCoCo Report') {
+            steps {
+                echo '📊 Génération du rapport JaCoCo...'
+                sh 'mvn jacoco:report'
+            }
+        }
+
+        stage('Publish JaCoCo Report') {
+            steps {
+                echo '📈 Publication du rapport JaCoCo...'
+                jacoco()
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                echo '🔍 Running SonarQube analysis...'
+                echo '🔍 Analyse statique avec SonarQube...'
                 withSonarQubeEnv('SonarQube') {
                     sh """
                         mvn sonar:sonar \
@@ -41,24 +59,28 @@ pipeline {
             }
         }
 
-        stage('Deploy to Nexus') {
+        stage('Quality Gate') {
             steps {
-                echo '🚀 Deploying to Nexus...'
-                sh 'mvn deploy'
+                echo '🛡️ Vérification de la Quality Gate...'
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
     }
 
     post {
         success {
-            echo '✅ Pipeline completed successfully!'
+            echo '✅ Pipeline exécuté avec succès.'
         }
         failure {
-            echo '❌ Le pipeline a échoué.'
-            script {
-                echo '🧹 Nettoyage Docker...'
-                sh 'docker-compose down -v || true'
-            }
+            echo '❌ Le pipeline a échoué. Consultez les logs.'
+        }
+        aborted {
+            echo '⚠️ Pipeline interrompu (aborted).'
+        }
+        always {
+            echo '🏁 Fin du pipeline.'
         }
     }
 }
