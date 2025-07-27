@@ -2,63 +2,64 @@ pipeline {
     agent any
 
     tools {
-        maven 'M3'         // Maven installé dans Jenkins (Manage Jenkins > Global Tool Configuration)
-        jdk 'JDK 17'       // JDK installé dans Jenkins
+        maven 'M3'         // Nom de l'installation Maven (dans Jenkins > Global Tool Configuration)
+        jdk 'JDK 17'       // Nom de l'installation JDK (également configurée dans Jenkins)
     }
 
     environment {
         JAVA_HOME        = tool('JDK 17')
         PATH             = "${JAVA_HOME}/bin:${env.PATH}"
-        GITHUB_TOKEN     = credentials('github-token')      // ID du secret GitHub (Secret Text dans Jenkins)
-        SONAR_TOKEN      = credentials('sonar-token')       // ID du token SonarQube
-        SONAR_HOST_URL   = 'http://localhost:9000'          // L'URL de ton serveur SonarQube
+        GITHUB_TOKEN     = credentials('github-token')      // Secret text dans Jenkins (GitHub Token)
+        SONAR_TOKEN      = credentials('sonar-token')       // Secret text dans Jenkins (SonarQube Token)
+        SONAR_HOST_URL   = 'http://localhost:9000'          // URL du serveur SonarQube
     }
 
     stages {
-        stage('Checkout') {
+        stage('📥 Checkout') {
             steps {
                 echo '🔄 Clonage du dépôt GitHub...'
                 git branch: 'main',
-                    url: "https://ghofrane-dridi:${GITHUB_TOKEN}@github.com/ghofrane-dridi/devSecOps.git"
+                    url: 'https://github.com/ghofrane-dridi/devSecOps.git',
+                    credentialsId: 'github-creds'
             }
         }
 
-        stage('Build & Test') {
+        stage('🏗️ Build & Test') {
             steps {
-                echo '🏗️ Compilation et tests Maven...'
+                echo '🔧 Compilation et exécution des tests...'
                 sh 'mvn clean verify'
             }
         }
 
-        stage('JaCoCo Report') {
+        stage('📊 JaCoCo Report') {
             steps {
-                echo '📊 Génération du rapport JaCoCo...'
+                echo '📈 Génération du rapport de couverture de code...'
                 sh 'mvn jacoco:report'
             }
         }
 
-        stage('Publish JaCoCo Report') {
+        stage('📤 Publish JaCoCo Report') {
             steps {
-                echo '📈 Publication du rapport JaCoCo dans Jenkins...'
-                jacoco()
+                echo '📎 Publication du rapport dans Jenkins...'
+                jacoco()  // Nécessite le plugin Jenkins JaCoCo
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('🔍 SonarQube Analysis') {
             steps {
-                echo '🔍 Analyse statique avec SonarQube...'
+                echo '📡 Lancement de l’analyse SonarQube...'
                 withSonarQubeEnv('SonarQube') {
                     sh """
                         mvn sonar:sonar \
-                        -Dsonar.projectKey=devSecOps \
-                        -Dsonar.host.url=${SONAR_HOST_URL} \
-                        -Dsonar.login=${SONAR_TOKEN}
+                            -Dsonar.projectKey=devSecOps \
+                            -Dsonar.host.url=${SONAR_HOST_URL} \
+                            -Dsonar.login=${SONAR_TOKEN}
                     """
                 }
             }
         }
 
-        stage('Quality Gate') {
+        stage('✅ Quality Gate') {
             steps {
                 echo '🛡️ Vérification de la Quality Gate SonarQube...'
                 timeout(time: 5, unit: 'MINUTES') {
@@ -67,9 +68,9 @@ pipeline {
             }
         }
 
-        stage('Deploy to Nexus') {
+        stage('🚀 Deploy to Nexus') {
             steps {
-                echo '🚀 Déploiement de l’artefact vers Nexus...'
+                echo '📦 Déploiement de l’artefact sur Nexus...'
                 sh 'mvn deploy'
             }
         }
@@ -80,13 +81,13 @@ pipeline {
             echo '✅ Pipeline terminé avec succès.'
         }
         failure {
-            echo '❌ Échec du pipeline. Consultez les erreurs.'
+            echo '❌ Échec du pipeline. Veuillez consulter les logs pour les détails.'
         }
         aborted {
             echo '⚠️ Pipeline interrompu manuellement.'
         }
         always {
-            echo '🏁 Fin du pipeline.'
+            echo '🏁 Fin de l’exécution du pipeline.'
         }
     }
 }
