@@ -39,7 +39,6 @@
         </dependency>
 
         <!-- MySQL -->
-        <!-- Note: mysql-connector-java est déprécié, utilisez com.mysql:mysql-connector-j si possible -->
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
@@ -151,24 +150,24 @@
                 <version>${sonar.maven.plugin.version}</version>
             </plugin>
 
-            <!-- Plugin de déploiement (facultatif mais recommandé pour personnaliser) -->
+            <!-- Plugin de déploiement -->
             <plugin>
-               <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-deploy-plugin</artifactId>
-               <version>3.1.1</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>3.1.1</version>
             </plugin>
         </plugins>
     </build>
 
-    <!-- Ajout de la section distributionManagement -->
+    <!-- Nexus deployment -->
     <distributionManagement>
         <repository>
-            <id>nexus</id>
+            <id>nexus-releases</id>
             <name>Nexus Releases</name>
             <url>http://localhost:8181/repository/maven-releases/</url>
         </repository>
         <snapshotRepository>
-            <id>nexus</id>
+            <id>nexus-snapshots</id>
             <name>Nexus Snapshots</name>
             <url>http://localhost:8181/repository/maven-snapshots/</url>
         </snapshotRepository>
