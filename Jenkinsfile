@@ -2,34 +2,42 @@ pipeline {
     agent any
 
     tools {
-        maven 'M3'       // Nom configuré dans Jenkins Global Tool Configuration
-        jdk 'JDK 17'     // Idem
+        maven 'M3'       // Nom donné dans Jenkins > Global Tool Configuration
+        jdk 'JDK 17'     // JDK installé et configuré dans Jenkins
     }
 
     environment {
-        SONARQUBE_SERVER = 'SonarQube'     // Nom configuré dans Jenkins > Manage Jenkins > Configure System > SonarQube servers
-        SONAR_TOKEN = credentials('sonar-token')     // Créez un Secret Text dans Jenkins (Manage Jenkins > Credentials)
-        DOCKER_REGISTRY = 'http://localhost:8081/repository/maven-releases/' // URL de Nexus repo (format Maven)
+        SONARQUBE = 'SonarQube'           // Nom du serveur SonarQube dans Jenkins
+        SONAR_LOGIN = credentials('sonar-token')  // Token sécurisé (Stocké dans Jenkins Credentials)
+        NEXUS_URL = 'http://localhost:8081/repository/maven-releases/'  // URL Nexus
     }
 
     stages {
+        stage('Start') {
+            steps {
+                echo '🚀 Starting Pipeline...'
+            }
+        }
 
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/ghofrane-dridi/devSecOps.git', branch: 'main'
+                echo '📦 Cloning repository...'
+                git branch: 'main', url: 'https://github.com/ghofrane-dridi/devSecOps.git'
             }
         }
 
         stage('Build Maven') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                echo '🔧 Building project with Maven...'
+                sh 'mvn clean install -DskipTests'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                    sh "mvn sonar:sonar -Dsonar.login=$SONAR_TOKEN"
+                echo '🔍 Analyzing code with SonarQube...'
+                withSonarQubeEnv('SonarQube') {
+                    sh "mvn sonar:sonar -Dsonar.login=${SONAR_LOGIN}"
                 }
             }
         }
@@ -44,38 +52,25 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t devsecops-springapp .'
+                echo '🐳 Building Docker image...'
+                sh 'docker build -t ghofrane/devsecops-app:latest .'
             }
         }
 
         stage('Push to Nexus') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                    sh '''
-                        mvn deploy -DaltDeploymentRepository=nexus::default::${DOCKER_REGISTRY} \
-                                   -Dnexus.username=$NEXUS_USER -Dnexus.password=$NEXUS_PASS
-                    '''
-                }
-            }
-        }
-
-        stage('Run Docker Container') {
-            steps {
-                sh '''
-                    docker stop springapp || true
-                    docker rm springapp || true
-                    docker run -d --name springapp -p 8080:8080 devsecops-springapp
-                '''
+                echo '📤 Deploying artifact to Nexus...'
+                sh "mvn deploy -DskipTests -Dnexus.url=${NEXUS_URL} -DaltDeploymentRepository=releases::default::${NEXUS_URL}"
             }
         }
     }
 
     post {
-        success {
-            echo "Pipeline executed successfully!"
+        always {
+            echo '✅ Pipeline finished'
         }
         failure {
-            echo "Pipeline failed. Please check logs."
+            echo '❌ Build failed!'
         }
     }
 }
