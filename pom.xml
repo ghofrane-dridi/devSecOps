@@ -42,6 +42,14 @@
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.33</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- H2 Database pour les tests -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
 
@@ -113,7 +121,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Jacoco (coverage) -->
+            <!-- JaCoCo -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -135,14 +143,14 @@
                 </executions>
             </plugin>
 
-            <!-- SonarQube -->
+            <!-- Sonar -->
             <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
                 <version>${sonar.maven.plugin.version}</version>
             </plugin>
 
-            <!-- Deploy to Nexus -->
+            <!-- Plugin de déploiement -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
@@ -151,22 +159,18 @@
         </plugins>
     </build>
 
+    <!-- Nexus deployment -->
     <distributionManagement>
         <repository>
-            <id>nexus</id>
+            <id>nexus-releases</id>
+            <name>Nexus Releases</name>
             <url>http://localhost:8181/repository/maven-releases/</url>
         </repository>
         <snapshotRepository>
-            <id>nexus</id>
+            <id>nexus-snapshots</id>
+            <name>Nexus Snapshots</name>
             <url>http://localhost:8181/repository/maven-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
-
-    <repositories>
-        <repository>
-            <id>central</id>
-            <url>https://repo.maven.apache.org/maven2</url>
-        </repository>
-    </repositories>
 
 </project>
