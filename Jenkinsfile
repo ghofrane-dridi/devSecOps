@@ -1,60 +1,81 @@
 pipeline {
     agent any
 
-    environment {
-        SONARQUBE_SERVER = 'SonarQube'
-        SONAR_TOKEN = credentials('sonar-token')
-        DOCKER_IMAGE = 'devsecops-springapp'
+    tools {
+        maven 'M3'       // Nom configuré dans Jenkins Global Tool Configuration
+        jdk 'JDK 17'     // Idem
     }
 
-    tools {
-        maven 'Maven'
-        jdk 'jdk-17'
+    environment {
+        SONARQUBE_SERVER = 'SonarQube'     // Nom configuré dans Jenkins > Manage Jenkins > Configure System > SonarQube servers
+        SONAR_TOKEN = credentials('sonar-token')     // Créez un Secret Text dans Jenkins (Manage Jenkins > Credentials)
+        DOCKER_REGISTRY = 'http://localhost:8081/repository/maven-releases/' // URL de Nexus repo (format Maven)
     }
 
     stages {
-        stage('Git Checkout') {
+
+        stage('Checkout') {
             steps {
-                git credentialsId: 'github-creds', url: 'https://github.com/ghofrane-dridi/devSecOps.git'
+                git url: 'https://github.com/ghofrane-dridi/devSecOps.git', branch: 'main'
             }
         }
 
-        stage('Build with Maven') {
+        stage('Build Maven') {
             steps {
-                sh 'mvn clean install'
+                sh 'mvn clean package -DskipTests'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                    sh "mvn sonar:sonar -Dsonar.projectKey=devsecops-springapp -Dsonar.login=$SONAR_TOKEN"
+                    sh "mvn sonar:sonar -Dsonar.login=$SONAR_TOKEN"
                 }
             }
         }
 
-        stage('Docker Build') {
+        stage('Quality Gate') {
             steps {
-                sh "docker build -t ${DOCKER_IMAGE} ."
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
 
-        stage('Docker Run') {
+        stage('Build Docker Image') {
             steps {
-                sh "docker run -d --name springapp -p 8080:8080 ${DOCKER_IMAGE}"
+                sh 'docker build -t devsecops-springapp .'
+            }
+        }
+
+        stage('Push to Nexus') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                    sh '''
+                        mvn deploy -DaltDeploymentRepository=nexus::default::${DOCKER_REGISTRY} \
+                                   -Dnexus.username=$NEXUS_USER -Dnexus.password=$NEXUS_PASS
+                    '''
+                }
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                sh '''
+                    docker stop springapp || true
+                    docker rm springapp || true
+                    docker run -d --name springapp -p 8080:8080 devsecops-springapp
+                '''
             }
         }
     }
 
     post {
-        always {
-            echo 'Pipeline terminé.'
-        }
         success {
-            echo 'Déploiement réussi !'
+            echo "Pipeline executed successfully!"
         }
         failure {
-            echo 'Échec du pipeline.'
+            echo "Pipeline failed. Please check logs."
         }
     }
 }
