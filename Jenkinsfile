@@ -1,46 +1,60 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'M3'       // Nom Maven configuré dans Jenkins
-        jdk 'JDK 17'     // Nom JDK configuré dans Jenkins
+    environment {
+        SONARQUBE_SERVER = 'SonarQube'
+        SONAR_TOKEN = credentials('sonar-token')
+        DOCKER_IMAGE = 'devsecops-springapp'
     }
 
-    environment {
-        SONAR_TOKEN = credentials('sonar-token')       // token Sonar (si utilisé)
+    tools {
+        maven 'Maven'
+        jdk 'jdk-17'
     }
 
     stages {
-        stage('Checkout') {
+        stage('Git Checkout') {
             steps {
-                git url: 'https://github.com/votre-utilisateur/votre-repo.git', branch: 'main'
+                git credentialsId: 'github-creds', url: 'https://github.com/ghofrane-dridi/devSecOps.git'
             }
         }
 
-        stage('Build') {
+        stage('Build with Maven') {
             steps {
                 sh 'mvn clean install'
             }
         }
 
-        stage('Test') {
-            steps {
-                sh 'mvn test'
-            }
-        }
-
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') {
-                    sh 'mvn sonar:sonar -Dsonar.login=$SONAR_TOKEN'
+                withSonarQubeEnv("${SONARQUBE_SERVER}") {
+                    sh "mvn sonar:sonar -Dsonar.projectKey=devsecops-springapp -Dsonar.login=$SONAR_TOKEN"
                 }
             }
         }
 
-        stage('Deploy to Nexus') {
+        stage('Docker Build') {
             steps {
-                sh 'mvn deploy'
+                sh "docker build -t ${DOCKER_IMAGE} ."
             }
+        }
+
+        stage('Docker Run') {
+            steps {
+                sh "docker run -d --name springapp -p 8080:8080 ${DOCKER_IMAGE}"
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline terminé.'
+        }
+        success {
+            echo 'Déploiement réussi !'
+        }
+        failure {
+            echo 'Échec du pipeline.'
         }
     }
 }
