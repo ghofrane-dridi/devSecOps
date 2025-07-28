@@ -50,7 +50,7 @@ pipeline {
                 withSonarQubeEnv('SonarQube') {
                     sh """
                         mvn sonar:sonar \
-                        -Dsonar.projectKey=devSecOps \
+                        -Dsonar.projectKey=devsecops \
                         -Dsonar.login=${SONAR_TOKEN}
                     """
                 }
