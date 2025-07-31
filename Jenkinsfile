@@ -2,14 +2,14 @@ pipeline {
     agent any
 
     tools {
-        maven 'M3'       // Nom configuré dans Jenkins > Global Tool Configuration
-        jdk 'JDK 17'     // JDK configuré dans Jenkins
+        maven 'M3'
+        jdk 'JDK 17'
     }
 
     environment {
-        SONARQUBE = 'SonarQube'                     // Nom du serveur SonarQube dans Jenkins
-        SONAR_TOKEN = credentials('sonar-token')    // Token sécurisé stocké dans Jenkins Credentials
-        NEXUS_URL = 'http://localhost:8081/repository/maven-releases/'  // URL Nexus
+        SONARQUBE = 'SonarQube'
+        SONAR_TOKEN = credentials('sonar-token')
+        NEXUS_URL = 'http://localhost:8081/repository/maven-releases/'
     }
 
     stages {
@@ -38,8 +38,7 @@ pipeline {
                 echo '🔍 Analyzing code with SonarQube...'
                 withSonarQubeEnv('SonarQube') {
                     sh """
-                        mvn -B -e sonar:sonar \
-                        -Dsonar.token=$SONAR_TOKEN
+                        mvn -B -e sonar:sonar -Dsonar.login=$SONAR_TOKEN
                     """
                 }
             }
@@ -64,8 +63,7 @@ pipeline {
             steps {
                 echo '📤 Deploying artifact to Nexus...'
                 sh """
-                    mvn -B deploy -DskipTests \
-                    -DaltDeploymentRepository=releases::default::${NEXUS_URL}
+                    mvn -B deploy -DskipTests -DaltDeploymentRepository=releases::default::${NEXUS_URL}
                 """
             }
         }
