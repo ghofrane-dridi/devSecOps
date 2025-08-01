@@ -27,9 +27,21 @@ pipeline {
             }
         }
 
-        stage('🔧 Maven Build (skip tests)') {
+        stage('🔧 Maven Clean & Compile') {
             steps {
-                sh 'mvn clean install -DskipTests -B'
+                sh 'mvn clean compile -B'
+            }
+        }
+
+        stage('🧪 Run Tests') {
+            steps {
+                sh 'mvn verify'
+            }
+        }
+
+        stage('📊 Code Coverage (JaCoCo)') {
+            steps {
+                jacoco()
             }
         }
 
@@ -39,9 +51,8 @@ pipeline {
                     sh '''
                         mvn sonar:sonar \
                         -Dsonar.projectKey=devsecops-app \
-                        -Dsonar.projectName=devsecops-app \
-                        -Dsonar.host.url=http://localhost:9000 \
-                        -Dsonar.login=$SONAR_TOKEN
+                        -Dsonar.login=$SONAR_TOKEN \
+                        -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
                     '''
                 }
             }
@@ -49,7 +60,7 @@ pipeline {
 
         stage('✅ Quality Gate') {
             steps {
-                timeout(time: 10, unit: 'MINUTES') {
+                timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
@@ -83,18 +94,9 @@ pipeline {
             }
         }
 
-        stage('📦 Docker Compose Up') {
+        stage('⚙️ Docker Compose Up') {
             steps {
                 sh 'docker compose up -d'
-            }
-        }
-
-        stage('📊 Start Monitoring') {
-            steps {
-                sh '''
-                    docker start prometheus || true
-                    docker start grafana || true
-                '''
             }
         }
     }
