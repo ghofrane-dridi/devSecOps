@@ -12,7 +12,7 @@
     <name>DevSecOps Spring Boot App</name>
     <description>Spring Boot Application with Nexus, SonarQube and Docker</description>
 
-    <!-- Utilisation de Spring Boot 3.3.0 -->
+    <!-- Parent Spring Boot -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
@@ -46,8 +46,15 @@
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.33</version> <!-- ⚠️ Version obligatoire -->
+            <version>8.0.33</version>
             <scope>runtime</scope>
+        </dependency>
+
+        <!-- Base de données H2 pour les tests -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <!-- Spring Boot Test -->
@@ -169,7 +176,7 @@
                 <version>${sonar.maven.plugin.version}</version>
             </plugin>
 
-            <!-- Déploiement -->
+            <!-- Déploiement Nexus -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
