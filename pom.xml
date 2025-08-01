@@ -26,7 +26,6 @@
         <maven.compiler.target>17</maven.compiler.target>
         <jacoco.version>0.8.11</jacoco.version>
         <sonar.maven.plugin.version>4.0.0.4121</sonar.maven.plugin.version>
-        <!-- Chemin du rapport JaCoCo pour SonarQube -->
         <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
@@ -47,6 +46,7 @@
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.33</version> <!-- ⚠️ Version obligatoire -->
             <scope>runtime</scope>
         </dependency>
 
@@ -64,7 +64,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Mockito pour les tests -->
+        <!-- Mockito -->
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
@@ -78,7 +78,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- JaCoCo Agent (pour la couverture de code) -->
+        <!-- JaCoCo Agent -->
         <dependency>
             <groupId>org.jacoco</groupId>
             <artifactId>org.jacoco.agent</artifactId>
@@ -101,7 +101,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Surefire Plugin (tests unitaires) -->
+            <!-- Surefire Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -111,7 +111,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Failsafe Plugin (tests d'intégration) -->
+            <!-- Failsafe Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -126,7 +126,7 @@
                 </executions>
             </plugin>
 
-            <!-- JaCoCo Plugin (rapport de couverture) -->
+            <!-- JaCoCo Plugin -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -148,7 +148,7 @@
                 </executions>
             </plugin>
 
-            <!-- Spring Boot Maven Plugin -->
+            <!-- Spring Boot Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -162,14 +162,14 @@
                 </configuration>
             </plugin>
 
-            <!-- SonarQube Maven Plugin -->
+            <!-- SonarQube Plugin -->
             <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
                 <version>${sonar.maven.plugin.version}</version>
             </plugin>
 
-            <!-- Déploiement vers Nexus -->
+            <!-- Déploiement -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
@@ -178,17 +178,17 @@
         </plugins>
     </build>
 
-    <!-- Configuration du dépôt Nexus -->
+    <!-- Nexus -->
     <distributionManagement>
         <repository>
             <id>nexus-releases</id>
             <name>Nexus Releases</name>
-            <url>http://192.168.56.11:8181/repository/maven-releases/</url>
+            <url>http://localhost:8181/repository/maven-releases/</url>
         </repository>
         <snapshotRepository>
             <id>nexus-snapshots</id>
             <name>Nexus Snapshots</name>
-            <url>http://192.168.56.11:8181/repository/maven-snapshots/</url>
+            <url>http://localhost:8181/repository/maven-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 
