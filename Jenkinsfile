@@ -121,8 +121,14 @@ Votre pipeline '${env.JOB_NAME}' (Build #${env.BUILD_NUMBER}) est terminé avec 
 
 Cordialement,  
 Jenkins CI/CD""",
-                to: 'ghofrane.dridi@esprit.tn'
+                to: 'ghofranedridi90@gmail.com'  // ✅ Ton email mis à jour ici
             )
+        }
+        success {
+            echo '✅ Pipeline succeeded! Application deployed successfully.'
+        }
+        failure {
+            echo '❌ Pipeline failed! Check SonarQube, Nexus, or Docker configuration.'
         }
     }
 }
