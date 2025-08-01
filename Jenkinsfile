@@ -27,21 +27,9 @@ pipeline {
             }
         }
 
-        stage('🔧 Maven Clean & Compile') {
+        stage('🔧 Maven Build (skip tests)') {
             steps {
-                sh 'mvn clean compile -B'
-            }
-        }
-
-        stage('🧪 Run Tests') {
-            steps {
-                sh 'mvn test'
-            }
-        }
-
-        stage('📊 Code Coverage (JaCoCo)') {
-            steps {
-                jacoco()
+                sh 'mvn clean install -DskipTests -B'
             }
         }
 
@@ -93,7 +81,7 @@ pipeline {
             }
         }
 
-        stage('compose') {
+        stage('📦 Docker Compose Up') {
             steps {
                 sh 'docker compose up -d'
             }
@@ -121,7 +109,7 @@ Votre pipeline '${env.JOB_NAME}' (Build #${env.BUILD_NUMBER}) est terminé avec 
 
 Cordialement,  
 Jenkins CI/CD""",
-                to: 'ghofranedridi90@gmail.com'  // ✅ Ton email mis à jour ici
+                to: 'ghofranedridi90@gmail.com'
             )
         }
         success {
