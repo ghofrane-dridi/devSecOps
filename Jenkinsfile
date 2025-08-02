@@ -1,24 +1,31 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'M3'
+        jdk 'JDK 17'
+    }
+
+    environment {
+        GITHUB_TOKEN = credentials('github-token')
+    }
+
     stages {
         stage('Cloner le dépôt GitHub') {
             steps {
-                echo '📥 Clonage du dépôt...'
-                git url: 'https://github.com/ghofrane-dridi/devSecOps.git', branch: 'main', credentialsId: 'github-token'
+                git branch: 'main', url: "https://${GITHUB_TOKEN}@github.com/ghofrane-dridi/devSecOps.git"
             }
         }
 
         stage('Compiler avec Maven') {
             steps {
-                echo '🔧 Compilation avec Maven...'
                 sh 'mvn clean package'
+                sh 'ls -l target' // pour vérifier le JAR généré
             }
         }
 
         stage('Docker Build') {
             steps {
-                echo '🐳 Construction de l\'image Docker...'
                 sh 'docker build -t ghofranedridi/devsecops:latest .'
             }
         }
@@ -26,7 +33,7 @@ pipeline {
 
     post {
         always {
-            echo "✅ Build terminé pour DevSecOps"
+            echo '✅ Build terminé'
         }
     }
 }
