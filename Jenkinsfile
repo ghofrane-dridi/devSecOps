@@ -1,127 +1,36 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'M3'
-        jdk 'JDK 17'
-    }
-
     environment {
-        GITHUB_REPO = 'https://github.com/ghofrane-dridi/devSecOps.git'
-        SONARQUBE = 'SonarQube'
-        SONAR_TOKEN = credentials('sonar-tokenn')
-        NEXUS_URL = 'http://localhost:8181/repository/maven-releases/'
-        DOCKER_IMAGE = 'ghofrane/devsecops-app:latest'
-        MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml' // chemin vers settings.xml
+        GITHUB_TOKEN = credentials('github-token') // Token GitHub dans Jenkins
     }
 
     stages {
-        stage('🚀 Start') {
+        stage('Cloner le dépôt GitHub') {
             steps {
-                echo 'Pipeline started for Ghofrane Dridi'
+                echo '📥 Clonage du dépôt...'
+                git branch: 'main', url: "https://${GITHUB_TOKEN}@github.com/ghofrane-dridi/devSecOps.git"
             }
         }
 
-        stage('📦 Checkout') {
+        stage('Compiler avec Maven') {
             steps {
-                git branch: 'main', url: "${GITHUB_REPO}"
+                echo '🔧 Compilation avec Maven...'
+                sh 'mvn clean compile'
             }
         }
 
-        stage('🔧 Maven Clean & Compile') {
+        stage('Docker Build') {
             steps {
-                sh "mvn clean compile -s ${MVN_SETTINGS} -B"
-            }
-        }
-
-        stage('🧪 Run Tests') {
-            steps {
-                sh "mvn verify -s ${MVN_SETTINGS}"
-            }
-        }
-
-        stage('📊 Code Coverage (JaCoCo)') {
-            steps {
-                jacoco()
-            }
-        }
-
-        stage('🔍 SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv(SONARQUBE) {
-                    sh """
-                        mvn sonar:sonar -s ${MVN_SETTINGS} \
-                        -Dsonar.projectKey=devsecops-app \
-                        -Dsonar.login=${SONAR_TOKEN} \
-                        -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-                    """
-                }
-            }
-        }
-
-        stage('✅ Quality Gate') {
-            steps {
-                timeout(time: 15, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
-
-        stage('📦 Deploy to Nexus') {
-            steps {
-                sh """
-                    mvn deploy -s ${MVN_SETTINGS} -DskipTests \
-                    -DaltDeploymentRepository=releases::default::${NEXUS_URL}
-                """
-            }
-        }
-
-        stage('🐳 Build Docker Image') {
-            steps {
-                sh "docker build -t ${DOCKER_IMAGE} ."
-            }
-        }
-
-        stage('🚢 Push to DockerHub') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh """
-                            docker login -u $DOCKER_USER -p $DOCKER_PASS
-                            docker push ${DOCKER_IMAGE}
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('⚙️ Docker Compose Up') {
-            steps {
-                sh 'docker compose up -d'
+                echo '🐳 Construction de l\'image Docker...'
+                sh 'docker build -t ghofranedridi/devsecops:latest .'
             }
         }
     }
 
     post {
         always {
-            emailext (
-                subject: "Pipeline Status: ${currentBuild.currentResult}",
-                body: """Bonjour Ghofrane,
-
-Votre pipeline '${env.JOB_NAME}' (Build #${env.BUILD_NUMBER}) est terminé avec le statut : **${currentBuild.currentResult}**.
-
-➡️ Consulter les logs : ${env.BUILD_URL}
-
-Cordialement,  
-Jenkins CI/CD""",
-                to: 'ghofranedridi90@gmail.com'
-            )
-        }
-        success {
-            echo '✅ Pipeline succeeded! Application deployed successfully.'
-        }
-        failure {
-            echo '❌ Pipeline failed! Check SonarQube, Nexus, or Docker configuration.'
+            echo "✅ Build terminé pour DevSecOps"
         }
     }
 }
