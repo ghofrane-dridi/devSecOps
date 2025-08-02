@@ -1,9 +1,8 @@
 pipeline {
     agent any
     tools {
-        maven 'M3'        // Ton installation Maven nommée 'M3' dans Jenkins
-        jdk 'jdk-17'      // Ton JDK installé dans Jenkins (nom exact à vérifier dans ta config)
-        // git 'DefaultGit' // Optionnel : si tu as configuré Git dans Jenkins et veux l’utiliser
+        maven 'Maven3'   // Nom de l'installation Maven dans Jenkins
+        git 'DefaultGit' // Nom de l'installation Git dans Jenkins (si configuré)
     }
     environment {
         GITHUB_TOKEN = credentials('github-token')
@@ -14,7 +13,7 @@ pipeline {
                 git branch: 'main', url: "https://${GITHUB_TOKEN}@github.com/ghofrane-dridi/devSecOps.git"
             }
         }
-        stage('Configurer Git') {
+        stage('Vérifier Git') {
             steps {
                 sh 'git --version'
                 sh '''
