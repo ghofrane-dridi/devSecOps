@@ -1,5 +1,6 @@
 /home/vagrant/devSecOps/src/main/java/com/example/devsecops/model/User.java
 /home/vagrant/devSecOps/src/main/java/com/example/devsecops/repository/UserRepository.java
 /home/vagrant/devSecOps/src/main/java/com/example/devsecops/service/UserService.java
+/home/vagrant/devSecOps/src/main/java/com/example/devsecops/controller/UserController.java
 /home/vagrant/devSecOps/src/main/java/com/example/devsecops/service/CalculatorService.java
-/home/vagrant/devSecOps/src/main/java/com/example/demo/DemoApplication.java
+/home/vagrant/devSecOps/src/main/java/com/example/devsecops/DevsecopsApplication.java
