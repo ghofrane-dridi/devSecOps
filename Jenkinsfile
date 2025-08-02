@@ -50,7 +50,8 @@ pipeline {
                 withSonarQubeEnv(SONARQUBE) {
                     sh '''
                         mvn sonar:sonar \
-                        -Dsonar.projectKey=devsecops-app \
+                        -Dsonar.projectKey=devsecops \
+                        -Dsonar.projectName=devSecOps \
                         -Dsonar.login=$SONAR_TOKEN \
                         -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
                     '''
