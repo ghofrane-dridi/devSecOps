@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK 17'       // Nom exact dans Jenkins Global Tool Configuration
-        maven 'M3'         // Nom exact de Maven dans Jenkins
+        jdk 'JDK 17'
+        maven 'M3'
     }
 
     environment {
@@ -21,15 +21,13 @@ pipeline {
 
         stage('Build Maven') {
             steps {
-                sh 'mvn clean install'  // Build complet (compile + tests + package)
+                sh 'mvn clean install -DskipTests'  // Build sans tests
             }
         }
 
         stage('Tests & Couverture') {
             steps {
-                // Les tests sont déjà exécutés dans 'mvn clean install', 
-                // mais si tu veux un step séparé, tu peux le faire ici.
-                sh 'mvn test'
+                sh 'mvn test'  // Lance les tests (JUnit, Mockito) et génère rapports Surefire + JaCoCo
             }
         }
 
@@ -38,9 +36,9 @@ pipeline {
                 withSonarQubeEnv('SonarQube') {
                     sh """
                     mvn sonar:sonar \
-                    -Dsonar.projectKey=devsecops \
-                    -Dsonar.host.url=$SONAR_HOST_URL \
-                    -Dsonar.login=$SONARQUBE_TOKEN
+                        -Dsonar.projectKey=devsecops \
+                        -Dsonar.host.url=$SONAR_HOST_URL \
+                        -Dsonar.login=$SONARQUBE_TOKEN
                     """
                 }
             }
@@ -61,9 +59,7 @@ pipeline {
 
     post {
         always {
-            // Publier les résultats JUnit dans Jenkins
-            junit '**/target/surefire-reports/*.xml' 
-            
+            junit '**/target/surefire-reports/*.xml'  // Publication rapports tests JUnit
             echo 'Build terminé.'
         }
 
