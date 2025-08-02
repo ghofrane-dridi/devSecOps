@@ -2,53 +2,49 @@ pipeline {
     agent any
 
     tools {
-        maven 'M3'          // Nom exact de ton Maven configuré dans Jenkins
-        jdk 'jdk'           // Nom exact de ton JDK (vérifie dans Global Tools)
+        jdk 'JDK 17' // ✅ Le nom doit correspondre à celui dans Global Tool Configuration
+        maven 'Maven 3.9.6' // Ou le nom que tu as configuré
     }
 
     environment {
         GITHUB_TOKEN = credentials('github-token')
         SONARQUBE_TOKEN = credentials('sonarqube-token')
+        SONAR_HOST_URL = 'http://localhost:9000'
     }
 
     stages {
-        stage('📥 Cloner le dépôt') {
+        stage('Build') {
             steps {
-                git branch: 'main',
-                    url: "https://${GITHUB_TOKEN}@github.com/ghofrane-dridi/DevSecOps.git"
+                sh 'mvn clean install'
             }
         }
 
-        stage('🔧 Compilation') {
-            steps {
-                sh 'mvn clean package'
-            }
-        }
-
-        stage('🧪 Tests') {
+        stage('Test & Coverage') {
             steps {
                 sh 'mvn test'
             }
         }
 
-        stage('📊 Analyse SonarQube') {
+        stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
-                    sh "mvn sonar:sonar -Dsonar.projectKey=devsecops -Dsonar.token=${SONARQUBE_TOKEN}"
+                    sh """
+                        mvn sonar:sonar \
+                        -Dsonar.projectKey=devsecops \
+                        -Dsonar.host.url=$SONAR_HOST_URL \
+                        -Dsonar.login=$SONARQUBE_TOKEN
+                    """
                 }
-            }
-        }
-
-        stage('🐋 Build Docker') {
-            steps {
-                sh 'docker build -t devsecops-app .'
             }
         }
     }
 
     post {
-        always {
-            echo '✅ Pipeline terminé.'
+        success {
+            echo '✅ Pipeline terminé avec succès.'
+        }
+        failure {
+            echo '❌ Échec du pipeline.'
         }
     }
 }
