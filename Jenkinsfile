@@ -1,47 +1,49 @@
 pipeline {
     agent any
+
     tools {
-        maven 'Maven3'   // Nom de l'installation Maven dans Jenkins
-        git 'DefaultGit' // Nom de l'installation Git dans Jenkins (si configuré)
+        maven 'M3'      // Nom exact de l'installation Maven dans Jenkins
+        git 'Default'   // Nom exact de l'installation Git dans Jenkins
     }
+
     environment {
         GITHUB_TOKEN = credentials('github-token')
     }
+
     stages {
-        stage('Cloner le dépôt') {
+        stage('Cloner le dépôt GitHub') {
             steps {
-                git branch: 'main', url: "https://${GITHUB_TOKEN}@github.com/ghofrane-dridi/devSecOps.git"
+                echo '📥 Clonage du dépôt...'
+                git branch: 'main',
+                    url: "https://${GITHUB_TOKEN}@github.com/ghofrane-dridi/DevSecOps.git"
             }
         }
-        stage('Vérifier Git') {
+
+        stage('Compiler avec Maven') {
             steps {
-                sh 'git --version'
-                sh '''
-                   git config --global user.name "Ghofrane Dridi"
-                   git config --global user.email "ghofranedridi90@gmail.com"
-                   git config --list
-                '''
-            }
-        }
-        stage('Compiler Maven') {
-            steps {
+                echo '🔧 Compilation avec Maven...'
                 sh 'mvn clean package'
             }
         }
-        stage('Vérifier JAR') {
+
+        stage('Exécuter les tests') {
             steps {
-                sh 'ls -l target/'
+                echo '🧪 Exécution des tests...'
+                sh 'mvn test'
             }
         }
-        stage('Construire Docker') {
+
+        stage('Construire l\'image Docker') {
             steps {
-                sh 'docker build -t ghofranedridi/devsecops:latest .'
+                echo '🐋 Construction de l\'image Docker...'
+                sh 'docker build -t devsecops-app .'
             }
         }
     }
+
     post {
         always {
-            echo 'Build terminé.'
+            echo '✅ Build terminé.'
         }
     }
 }
