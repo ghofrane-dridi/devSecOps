@@ -1,15 +1,11 @@
 pipeline {
     agent any
 
-    environment {
-        GITHUB_TOKEN = credentials('github-token') // Token GitHub dans Jenkins
-    }
-
     stages {
         stage('Cloner le dépôt GitHub') {
             steps {
                 echo '📥 Clonage du dépôt...'
-                git branch: 'main', url: "https://${GITHUB_TOKEN}@github.com/ghofrane-dridi/devSecOps.git"
+                git url: 'https://github.com/ghofrane-dridi/devSecOps.git', branch: 'main', credentialsId: 'github-token'
             }
         }
 
