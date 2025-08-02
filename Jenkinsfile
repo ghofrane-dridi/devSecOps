@@ -9,7 +9,7 @@ pipeline {
     environment {
         GITHUB_REPO = 'https://github.com/ghofrane-dridi/devSecOps.git'
         SONARQUBE = 'SonarQube'
-        SONAR_TOKEN = credentials('sonar-token')
+        SONAR_TOKEN = credentials('sonar-tokenn')
         NEXUS_URL = 'http://localhost:8181/repository/maven-releases/'
         DOCKER_IMAGE = 'ghofrane/devsecops-app:latest'
     }
