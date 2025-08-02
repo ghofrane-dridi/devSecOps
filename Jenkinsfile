@@ -12,6 +12,7 @@ pipeline {
         SONAR_TOKEN = credentials('sonar-tokenn')
         NEXUS_URL = 'http://localhost:8181/repository/maven-releases/'
         DOCKER_IMAGE = 'ghofrane/devsecops-app:latest'
+        MVN_SETTINGS = '/var/lib/jenkins/.m2/settings.xml' // chemin vers settings.xml
     }
 
     stages {
@@ -29,13 +30,13 @@ pipeline {
 
         stage('🔧 Maven Clean & Compile') {
             steps {
-                sh 'mvn clean compile -B'
+                sh "mvn clean compile -s ${MVN_SETTINGS} -B"
             }
         }
 
         stage('🧪 Run Tests') {
             steps {
-                sh 'mvn verify'
+                sh "mvn verify -s ${MVN_SETTINGS}"
             }
         }
 
@@ -48,13 +49,12 @@ pipeline {
         stage('🔍 SonarQube Analysis') {
             steps {
                 withSonarQubeEnv(SONARQUBE) {
-                    sh '''
-                        mvn sonar:sonar \
-                        -Dsonar.projectKey=devsecops \
-                        -Dsonar.projectName=devSecOps \
-                        -Dsonar.login=$SONAR_TOKEN \
+                    sh """
+                        mvn sonar:sonar -s ${MVN_SETTINGS} \
+                        -Dsonar.projectKey=devsecops-app \
+                        -Dsonar.login=${SONAR_TOKEN} \
                         -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-                    '''
+                    """
                 }
             }
         }
@@ -69,10 +69,10 @@ pipeline {
 
         stage('📦 Deploy to Nexus') {
             steps {
-                sh '''
-                    mvn deploy -DskipTests \
+                sh """
+                    mvn deploy -s ${MVN_SETTINGS} -DskipTests \
                     -DaltDeploymentRepository=releases::default::${NEXUS_URL}
-                '''
+                """
             }
         }
 
