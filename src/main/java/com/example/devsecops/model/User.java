@@ -1,27 +1,20 @@
 package com.example.devsecops.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-
-@Entity
 public class User {
-
-    @Id
     private Long id;
-    private String username;
+    private String name;
     private String email;
 
-    // Constructeur par défaut requis par JPA
+    // Constructeurs
     public User() {}
 
-    // Constructeur avec paramètres correspondant aux tests
-    public User(Long id, String username, String email) {
+    public User(Long id, String name, String email) {
         this.id = id;
-        this.username = username;
+        this.name = name;
         this.email = email;
     }
 
-    // Getters et setters
+    // Getters et Setters
     public Long getId() {
         return id;
     }
@@ -30,12 +23,12 @@ public class User {
         this.id = id;
     }
 
-    public String getUsername() {
-        return username;
+    public String getName() {
+        return name;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getEmail() {

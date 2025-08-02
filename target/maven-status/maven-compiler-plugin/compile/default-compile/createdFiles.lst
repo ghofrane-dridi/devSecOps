@@ -3,4 +3,5 @@ com/example/devsecops/model/User.class
 com/example/devsecops/repository/UserRepository.class
 com/example/devsecops/controller/UserController.class
 com/example/devsecops/DevsecopsApplication.class
+com/example/Hello.class
 com/example/devsecops/service/CalculatorService.class
