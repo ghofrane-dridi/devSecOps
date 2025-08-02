@@ -2,14 +2,14 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK 17'       // Nom exact dans Jenkins Global Tool Configuration
-        maven 'M3'         // Nom exact de Maven dans Jenkins
+        jdk 'JDK 17'       // Nom défini dans Jenkins > Global Tool Configuration
+        maven 'M3'         // Nom défini pour Maven
     }
 
     environment {
-        GITHUB_TOKEN = credentials('github-token')
-        SONARQUBE_TOKEN = credentials('sonarqube-token')
-        SONAR_HOST_URL = 'http://localhost:9000'
+        GITHUB_TOKEN     = credentials('github-token')
+        SONARQUBE_TOKEN  = credentials('sonarqube-token')
+        SONAR_HOST_URL   = 'http://localhost:9000'
     }
 
     stages {
@@ -19,38 +19,40 @@ pipeline {
             }
         }
 
-        stage('Build Maven') {
+        stage('Build Maven (sans tests)') {
             steps {
                 sh 'mvn clean install -DskipTests'
             }
         }
 
-        stage('Tests & Couverture') {
+        stage('Tests unitaires avec JaCoCo') {
             steps {
                 sh 'mvn test'
+                junit '**/target/surefire-reports/*.xml'
             }
         }
 
-        stage('Analyse SonarQube') {
+        stage('Analyse SonarQube + JaCoCo') {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     sh """
-                    mvn sonar:sonar \
-                    -Dsonar.projectKey=devsecops \
-                    -Dsonar.host.url=$SONAR_HOST_URL \
-                    -Dsonar.login=$SONARQUBE_TOKEN
+                        mvn verify sonar:sonar \
+                        -Dsonar.projectKey=devsecops \
+                        -Dsonar.host.url=$SONAR_HOST_URL \
+                        -Dsonar.login=$SONARQUBE_TOKEN \
+                        -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
                     """
                 }
             }
         }
 
-        stage('Vérifier JAR') {
+        stage('Vérifier le JAR') {
             steps {
-                sh 'ls -l target/'
+                sh 'ls -lh target/*.jar'
             }
         }
 
-        stage('Construire Docker') {
+        stage('Construire l’image Docker') {
             steps {
                 sh 'docker build -t ghofranedridi/devsecops:latest .'
             }
@@ -59,13 +61,13 @@ pipeline {
 
     post {
         success {
-            echo '✅ Pipeline terminé avec succès.'
+            echo '✅ Pipeline réussi : build, test, analyse, docker OK.'
         }
         failure {
-            echo '❌ Échec du pipeline.'
+            echo '❌ Pipeline échoué.'
         }
         always {
-            echo 'Build terminé.'
+            echo '📦 Pipeline terminé (succès ou non).'
         }
     }
 }
