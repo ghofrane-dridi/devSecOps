@@ -4,15 +4,11 @@ import com.example.devsecops.model.User;
 import com.example.devsecops.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.*;
+import java.util.*;
 
-import java.util.Arrays;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class UserServiceTest {
 
@@ -22,21 +18,70 @@ class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
+    private User user1;
+    private User user2;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+
+        user1 = new User();
+        user1.setId(1L);
+        user1.setName("Alice");
+
+        user2 = new User();
+        user2.setId(2L);
+        user2.setName("Bob");
     }
 
     @Test
     void testGetAllUsers() {
-        User user1 = new User(1L, "Alice", "alice@example.com");
-        User user2 = new User(2L, "Bob", "bob@example.com");
+        List<User> users = Arrays.asList(user1, user2);
+        when(userRepository.findAll()).thenReturn(users);
 
-        when(userRepository.findAll()).thenReturn(Arrays.asList(user1, user2));
+        List<User> result = userService.getAllUsers();
 
-        List<User> users = userService.getAllUsers();
+        assertEquals(2, result.size());
+        verify(userRepository, times(1)).findAll();
+    }
 
-        assertEquals(2, users.size());
-        assertEquals("Alice", users.get(0).getName());
+    @Test
+    void testGetUserById_found() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user1));
+
+        User result = userService.getUserById(1L);
+
+        assertNotNull(result);
+        assertEquals("Alice", result.getName());
+        verify(userRepository).findById(1L);
+    }
+
+    @Test
+    void testGetUserById_notFound() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        User result = userService.getUserById(99L);
+
+        assertNull(result);
+        verify(userRepository).findById(99L);
+    }
+
+    @Test
+    void testSaveUser() {
+        when(userRepository.save(user1)).thenReturn(user1);
+
+        User saved = userService.saveUser(user1);
+
+        assertEquals("Alice", saved.getName());
+        verify(userRepository).save(user1);
+    }
+
+    @Test
+    void testDeleteUser() {
+        Long userId = 1L;
+
+        userService.deleteUser(userId);
+
+        verify(userRepository).deleteById(userId);
     }
 }
