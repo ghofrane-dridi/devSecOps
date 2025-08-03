@@ -1,4 +1,4 @@
-pipeline { 
+pipeline {
     agent any
 
     tools {
@@ -8,6 +8,7 @@ pipeline {
 
     environment {
         GITHUB_TOKEN = credentials('github-token')
+        SONARQUBE_TOKEN = credentials('sonarqube-token')
         SONAR_HOST_URL = 'http://localhost:9000'
     }
 
@@ -26,19 +27,19 @@ pipeline {
 
         stage('Tests & Couverture') {
             steps {
-                sh 'mvn test'
-                sh 'ls -l target/surefire-reports/'  // Vérification rapports tests
+                sh 'mvn test'  // Test à part, même si déjà fait dans install
+                sh 'ls -l target/surefire-reports/'  // Vérification rapports dans console Jenkins
             }
         }
 
         stage('Analyse SonarQube') {
             steps {
-                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                withSonarQubeEnv('SonarQube') {
                     sh """
                     mvn sonar:sonar \
                     -Dsonar.projectKey=devsecops \
-                    -Dsonar.host.url=$SONAR_HOST_URL \
-                    -Dsonar.login=$SONAR_TOKEN
+                    -Dsonar.host.url=${SONAR_HOST_URL} \
+                    -Dsonar.login=${SONARQUBE_TOKEN}
                     """
                 }
             }
@@ -59,7 +60,6 @@ pipeline {
 
     post {
         always {
-            // Publier les rapports JUnit
             junit '**/target/surefire-reports/*.xml' 
             echo 'Build terminé.'
         }
