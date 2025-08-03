@@ -12,7 +12,7 @@ public class UserController {
 
     private final UserService userService;
 
-    // ✅ Ce constructeur manquait
+    // Injection via constructeur (bonne pratique)
 <span class="fc" id="L16">    public UserController(UserService userService) {</span>
 <span class="fc" id="L17">        this.userService = userService;</span>
 <span class="fc" id="L18">    }</span>
