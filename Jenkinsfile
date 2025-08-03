@@ -2,20 +2,20 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK 17'
-        maven 'M3'
+        jdk 'JDK 17'       // Doit exister dans Jenkins > Global Tool Configuration
+        maven 'M3'         // Doit exister dans Jenkins > Global Tool Configuration
     }
 
     environment {
-        GITHUB_TOKEN = credentials('github-token')
-        SONARQUBE_TOKEN = credentials('sonarqube-token')
-        SONAR_HOST_URL = 'http://localhost:9000'
+        GITHUB_TOKEN = credentials('github-token')            // Ton token GitHub (type Secret text)
+        SONARQUBE_TOKEN = credentials('sonarqube-token')      // Ton token SonarQube (type Secret text)
+        SONAR_HOST_URL = 'http://localhost:9000'              // L'URL SonarQube (vérifie le port)
     }
 
     stages {
         stage('Cloner le dépôt') {
             steps {
-                git branch: 'main', url: "https://${env.GITHUB_TOKEN}@github.com/ghofrane-dridi/devSecOps.git"
+                git branch: 'main', url: "https://${GITHUB_TOKEN}@github.com/ghofrane-dridi/devSecOps.git"
             }
         }
 
@@ -27,8 +27,8 @@ pipeline {
 
         stage('Tests & Couverture') {
             steps {
-                sh 'mvn test jacoco:report'
-                sh 'ls -l target/site/jacoco/'
+                sh 'mvn test'
+                sh 'ls -l target/surefire-reports/'
             }
         }
 
@@ -36,11 +36,11 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     sh """
-                        mvn sonar:sonar \
-                        -Dsonar.projectKey=devsecops \
-                        -Dsonar.host.url=${env.SONAR_HOST_URL} \
-                        -Dsonar.login=${env.SONARQUBE_TOKEN} \
-                        -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                    mvn sonar:sonar \
+                    -Dsonar.projectKey=devsecops \
+                    -Dsonar.host.url=$SONAR_HOST_URL \
+                    -Dsonar.token=$SONARQUBE_TOKEN \
+                    -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
                     """
                 }
             }
@@ -48,7 +48,7 @@ pipeline {
 
         stage('Vérifier JAR') {
             steps {
-                sh 'ls -lh target/*.jar || echo "⚠️ Aucun fichier .jar trouvé !"'
+                sh 'ls -lh target/*.jar'
             }
         }
 
@@ -62,7 +62,7 @@ pipeline {
     post {
         always {
             junit '**/target/surefire-reports/*.xml'
-            echo '📦 Build terminé.'
+            echo 'Build terminé.'
         }
         success {
             echo '✅ Pipeline terminé avec succès.'
