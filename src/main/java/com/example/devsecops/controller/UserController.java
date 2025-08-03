@@ -2,7 +2,6 @@ package com.example.devsecops.controller;
 
 import com.example.devsecops.model.User;
 import com.example.devsecops.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,7 +12,7 @@ public class UserController {
 
     private final UserService userService;
 
-    // ✅ Ce constructeur manquait
+    // Injection via constructeur (bonne pratique)
     public UserController(UserService userService) {
         this.userService = userService;
     }

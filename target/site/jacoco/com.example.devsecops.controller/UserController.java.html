@@ -2,7 +2,6 @@
 
 import com.example.devsecops.model.User;
 import com.example.devsecops.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,28 +13,28 @@ public class UserController {
     private final UserService userService;
 
     // ✅ Ce constructeur manquait
-<span class="fc" id="L17">    public UserController(UserService userService) {</span>
-<span class="fc" id="L18">        this.userService = userService;</span>
-<span class="fc" id="L19">    }</span>
+<span class="fc" id="L16">    public UserController(UserService userService) {</span>
+<span class="fc" id="L17">        this.userService = userService;</span>
+<span class="fc" id="L18">    }</span>
 
     @GetMapping
     public List&lt;User&gt; getAllUsers() {
-<span class="fc" id="L23">        return userService.getAllUsers();</span>
+<span class="fc" id="L22">        return userService.getAllUsers();</span>
     }
 
     @GetMapping(&quot;/{id}&quot;)
     public User getUserById(@PathVariable Long id) {
-<span class="fc" id="L28">        return userService.getUserById(id);</span>
+<span class="fc" id="L27">        return userService.getUserById(id);</span>
     }
 
     @PostMapping
     public User createUser(@RequestBody User user) {
-<span class="fc" id="L33">        return userService.saveUser(user);</span>
+<span class="fc" id="L32">        return userService.saveUser(user);</span>
     }
 
     @DeleteMapping(&quot;/{id}&quot;)
     public void deleteUser(@PathVariable Long id) {
-<span class="fc" id="L38">        userService.deleteUser(id);</span>
-<span class="fc" id="L39">    }</span>
+<span class="fc" id="L37">        userService.deleteUser(id);</span>
+<span class="fc" id="L38">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

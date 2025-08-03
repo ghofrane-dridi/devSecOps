@@ -10,7 +10,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class UserControllerTest {
+class UserControllerTest {
 
     @Test
     void testGetAllUsers() {
@@ -47,7 +47,6 @@ public class UserControllerTest {
 
         User user = new User(null, "Charlie", "charlie@example.com");
         User savedUser = new User(2L, "Charlie", "charlie@example.com");
-
         when(userService.saveUser(user)).thenReturn(savedUser);
 
         User result = controller.createUser(user);
