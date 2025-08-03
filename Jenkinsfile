@@ -2,13 +2,13 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK 17'       // Nom exact dans Jenkins Global Tool Configuration
-        maven 'M3'         // Nom exact de Maven dans Jenkins
+        jdk 'JDK 17'        // Configuré dans Jenkins > Global Tools
+        maven 'M3'          // Configuré dans Jenkins > Global Tools
     }
 
     environment {
-        GITHUB_TOKEN = credentials('github-token')
-        SONARQUBE_TOKEN = credentials('sonarqube-token')
+        GITHUB_TOKEN = credentials('github-token')             // Ajouté dans Jenkins Credentials
+        SONARQUBE_TOKEN = credentials('sonarqube-token')       // Ajouté dans Jenkins Credentials
         SONAR_HOST_URL = 'http://localhost:9000'
     }
 
@@ -21,14 +21,14 @@ pipeline {
 
         stage('Build Maven') {
             steps {
-                sh 'mvn clean install'  // Build complet (compile + tests + package)
+                sh 'mvn clean install'  // Compile + Test + Package
             }
         }
 
         stage('Tests & Couverture') {
             steps {
-                sh 'mvn test'  // Test à part, même si déjà fait dans install
-                sh 'ls -l target/surefire-reports/'  // Vérification rapports dans console Jenkins
+                sh 'mvn test'
+                sh 'ls -l target/surefire-reports/'
             }
         }
 
@@ -67,8 +67,8 @@ pipeline {
 
     post {
         always {
-            junit '**/target/surefire-reports/*.xml' 
-            echo 'Build terminé.'
+            junit '**/target/surefire-reports/*.xml'
+            echo '🛠️ Build terminé.'
         }
         success {
             echo '✅ Pipeline terminé avec succès.'
