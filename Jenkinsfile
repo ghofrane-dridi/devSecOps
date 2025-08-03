@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK 17'       // Nom exact dans Jenkins Global Tool Configuration
-        maven 'M3'         // Nom exact de Maven dans Jenkins
+        jdk 'JDK 17'       // Doit correspondre exactement au nom configuré dans Jenkins
+        maven 'M3'         // Idem pour Maven
     }
 
     environment {
@@ -21,14 +21,15 @@ pipeline {
 
         stage('Build Maven') {
             steps {
-                sh 'mvn clean install'  // Build complet (compile + tests + package)
+                sh 'mvn clean install'
             }
         }
 
         stage('Tests & Couverture') {
             steps {
                 sh 'mvn test'
-                sh 'ls -l target/surefire-reports/'  // Pour vérifier la présence des rapports dans la console Jenkins
+                sh 'mvn jacoco:report'  // ✅ Génère rapport JaCoCo dans target/site/jacoco/
+                sh 'ls -l target/surefire-reports/'
             }
         }
 
@@ -37,9 +38,10 @@ pipeline {
                 withSonarQubeEnv('SonarQube') {
                     sh """
                     mvn sonar:sonar \
-                    -Dsonar.projectKey=devsecops \
-                    -Dsonar.host.url=$SONAR_HOST_URL \
-                    -Dsonar.login=$SONARQUBE_TOKEN
+                        -Dsonar.projectKey=devsecops \
+                        -Dsonar.host.url=$SONAR_HOST_URL \
+                        -Dsonar.login=$SONARQUBE_TOKEN \
+                        -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
                     """
                 }
             }
@@ -47,7 +49,7 @@ pipeline {
 
         stage('Vérifier JAR') {
             steps {
-                sh 'ls -l target/'
+                sh 'ls -lh target/*.jar || echo "Aucun fichier .jar trouvé !"'
             }
         }
 
@@ -60,9 +62,8 @@ pipeline {
 
     post {
         always {
-            // Publier les rapports JUnit (attention au chemin générique avec **/)
-            junit '**/target/surefire-reports/*.xml' 
-            echo 'Build terminé.'
+            junit '**/target/surefire-reports/*.xml'
+            echo '📦 Build terminé.'
         }
         success {
             echo '✅ Pipeline terminé avec succès.'
