@@ -1,15 +1,14 @@
-pipeline {
+pipeline { 
     agent any
 
     tools {
-        jdk 'JDK 17'       // Doit exister dans Jenkins > Global Tool Configuration
-        maven 'M3'         // Doit exister dans Jenkins > Global Tool Configuration
+        jdk 'JDK 17'       // Nom exact dans Jenkins Global Tool Configuration
+        maven 'M3'         // Nom exact de Maven dans Jenkins
     }
 
     environment {
-        GITHUB_TOKEN = credentials('github-token')            // Ton token GitHub (type Secret text)
-        SONARQUBE_TOKEN = credentials('sonarqube-token')      // Ton token SonarQube (type Secret text)
-        SONAR_HOST_URL = 'http://localhost:9000'              // L'URL SonarQube (vérifie le port)
+        GITHUB_TOKEN = credentials('github-token')
+        SONAR_HOST_URL = 'http://localhost:9000'
     }
 
     stages {
@@ -21,26 +20,25 @@ pipeline {
 
         stage('Build Maven') {
             steps {
-                sh 'mvn clean install'
+                sh 'mvn clean install'  // Build complet (compile + tests + package)
             }
         }
 
         stage('Tests & Couverture') {
             steps {
                 sh 'mvn test'
-                sh 'ls -l target/surefire-reports/'
+                sh 'ls -l target/surefire-reports/'  // Vérification rapports tests
             }
         }
 
         stage('Analyse SonarQube') {
             steps {
-                withSonarQubeEnv('SonarQube') {
+                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                     sh """
                     mvn sonar:sonar \
                     -Dsonar.projectKey=devsecops \
                     -Dsonar.host.url=$SONAR_HOST_URL \
-                    -Dsonar.token=$SONARQUBE_TOKEN \
-                    -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                    -Dsonar.login=$SONAR_TOKEN
                     """
                 }
             }
@@ -48,7 +46,7 @@ pipeline {
 
         stage('Vérifier JAR') {
             steps {
-                sh 'ls -lh target/*.jar'
+                sh 'ls -l target/'
             }
         }
 
@@ -61,7 +59,8 @@ pipeline {
 
     post {
         always {
-            junit '**/target/surefire-reports/*.xml'
+            // Publier les rapports JUnit
+            junit '**/target/surefire-reports/*.xml' 
             echo 'Build terminé.'
         }
         success {
