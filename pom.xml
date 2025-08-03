@@ -23,7 +23,6 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
-    <!-- 💾 Dépôts Nexus -->
     <distributionManagement>
         <repository>
             <id>nexus-releases</id>
@@ -57,7 +56,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Tests (JUnit, Mockito...) -->
+        <!-- Tests -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -66,6 +65,7 @@
     </dependencies>
 
     <build>
+        <finalName>devsecops-1.0.1-SNAPSHOT</finalName>
         <plugins>
             <!-- Spring Boot Plugin -->
             <plugin>
@@ -110,5 +110,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
