@@ -12,76 +12,74 @@ import static org.mockito.Mockito.*;
 
 class UserServiceTest {
 
-    @Mock
-    private UserRepository userRepository;
-
     @InjectMocks
     private UserService userService;
 
-    private User user1;
-    private User user2;
+    @Mock
+    private UserRepository userRepository;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-
-        user1 = new User();
-        user1.setId(1L);
-        user1.setName("Alice");
-
-        user2 = new User();
-        user2.setId(2L);
-        user2.setName("Bob");
     }
 
     @Test
     void testGetAllUsers() {
-        List<User> users = Arrays.asList(user1, user2);
-        when(userRepository.findAll()).thenReturn(users);
+        List<User> mockUsers = Arrays.asList(
+            new User(1L, "Alice", "alice@example.com"),
+            new User(2L, "Bob", "bob@example.com")
+        );
 
-        List<User> result = userService.getAllUsers();
+        when(userRepository.findAll()).thenReturn(mockUsers);
 
-        assertEquals(2, result.size());
-        verify(userRepository, times(1)).findAll();
+        List<User> users = userService.getAllUsers();
+
+        assertEquals(2, users.size());
+        assertEquals("Alice", users.get(0).getName());
     }
 
     @Test
-    void testGetUserById_found() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user1));
+    void testGetUserById_UserExists() {
+        User user = new User(1L, "Alice", "alice@example.com");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
         User result = userService.getUserById(1L);
 
         assertNotNull(result);
         assertEquals("Alice", result.getName());
-        verify(userRepository).findById(1L);
     }
 
     @Test
-    void testGetUserById_notFound() {
+    void testGetUserById_UserNotFound() {
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
         User result = userService.getUserById(99L);
 
         assertNull(result);
-        verify(userRepository).findById(99L);
     }
 
     @Test
     void testSaveUser() {
-        when(userRepository.save(user1)).thenReturn(user1);
+        User user = new User(null, "Charlie", "charlie@example.com");
+        User savedUser = new User(3L, "Charlie", "charlie@example.com");
 
-        User saved = userService.saveUser(user1);
+        when(userRepository.save(user)).thenReturn(savedUser);
 
-        assertEquals("Alice", saved.getName());
-        verify(userRepository).save(user1);
+        User result = userService.saveUser(user);
+
+        assertEquals(3L, result.getId());
+        assertEquals("Charlie", result.getName());
     }
 
     @Test
     void testDeleteUser() {
         Long userId = 1L;
 
+        doNothing().when(userRepository).deleteById(userId);
+
         userService.deleteUser(userId);
 
-        verify(userRepository).deleteById(userId);
+        verify(userRepository, times(1)).deleteById(userId);
     }
 }
