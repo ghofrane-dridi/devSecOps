@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK 17'       // Doit correspondre exactement au nom configuré dans Jenkins
-        maven 'M3'         // Idem pour Maven
+        jdk 'JDK 17'       // Nom exact configuré dans Jenkins (Global Tool Configuration)
+        maven 'M3'         // Nom exact Maven configuré
     }
 
     environment {
@@ -27,8 +27,9 @@ pipeline {
 
         stage('Tests & Couverture') {
             steps {
-                sh 'mvn test'
-                sh 'mvn jacoco:report'  // ✅ Génère rapport JaCoCo dans target/site/jacoco/
+                // Lance les tests unitaires + génération du rapport XML JaCoCo (requis par SonarQube)
+                sh 'mvn test jacoco:report'
+                sh 'ls -l target/site/jacoco/'
                 sh 'ls -l target/surefire-reports/'
             }
         }
@@ -49,7 +50,7 @@ pipeline {
 
         stage('Vérifier JAR') {
             steps {
-                sh 'ls -lh target/*.jar || echo "Aucun fichier .jar trouvé !"'
+                sh 'ls -lh target/*.jar || echo "⚠️ Aucun fichier .jar trouvé !"'
             }
         }
 
