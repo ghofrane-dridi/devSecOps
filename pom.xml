@@ -15,6 +15,7 @@
     <groupId>com.example</groupId>
     <artifactId>devsecops</artifactId>
     <version>1.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
     <name>devsecops</name>
 
     <properties>
@@ -102,7 +103,7 @@
                 </executions>
             </plugin>
 
-            <!-- Sonar Plugin -->
+            <!-- SonarQube Plugin -->
             <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
