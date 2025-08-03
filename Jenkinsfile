@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK 17'       // Nom exact configuré dans Jenkins (Global Tool Configuration)
-        maven 'M3'         // Nom exact Maven configuré
+        jdk 'JDK 17'
+        maven 'M3'
     }
 
     environment {
@@ -15,7 +15,7 @@ pipeline {
     stages {
         stage('Cloner le dépôt') {
             steps {
-                git branch: 'main', url: "https://${GITHUB_TOKEN}@github.com/ghofrane-dridi/devSecOps.git"
+                git branch: 'main', url: "https://${env.GITHUB_TOKEN}@github.com/ghofrane-dridi/devSecOps.git"
             }
         }
 
@@ -27,10 +27,8 @@ pipeline {
 
         stage('Tests & Couverture') {
             steps {
-                // Lance les tests unitaires + génération du rapport XML JaCoCo (requis par SonarQube)
                 sh 'mvn test jacoco:report'
                 sh 'ls -l target/site/jacoco/'
-                sh 'ls -l target/surefire-reports/'
             }
         }
 
@@ -38,10 +36,10 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     sh """
-                    mvn sonar:sonar \
+                        mvn sonar:sonar \
                         -Dsonar.projectKey=devsecops \
-                        -Dsonar.host.url=$SONAR_HOST_URL \
-                        -Dsonar.login=$SONARQUBE_TOKEN \
+                        -Dsonar.host.url=${env.SONAR_HOST_URL} \
+                        -Dsonar.login=${env.SONARQUBE_TOKEN} \
                         -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
                     """
                 }
