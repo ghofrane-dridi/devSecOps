@@ -1,63 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.example</groupId>
   <artifactId>devsecops</artifactId>
   <version>1.0.0</version>
   <packaging>jar</packaging>
-  <name>DevSecOps</name>
+
+  <name>devsecops</name>
+  <description>Projet DevSecOps avec Jenkins, SonarQube, Nexus</description>
 
   <properties>
     <java.version>17</java.version>
+    <spring.boot.version>3.2.2</spring.boot.version>
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <spring.boot.version>3.1.3</spring.boot.version>
   </properties>
 
   <dependencies>
-    <!-- Spring Boot Starters -->
+    <!-- Web -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
+      <version>${spring.boot.version}</version>
     </dependency>
 
-    <!-- Spring Boot Test -->
+    <!-- Tests -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
+      <version>${spring.boot.version}</version>
       <scope>test</scope>
     </dependency>
 
-    <!-- Mockito -->
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <version>5.2.0</version>
-      <scope>test</scope>
-    </dependency>
-
-    <!-- Lombok (facultatif mais utile) -->
+    <!-- Lombok -->
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
-      <optional>true</optional>
+      <version>1.18.30</version>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 
   <build>
     <plugins>
-      <!-- Spring Boot Maven Plugin -->
+      <!-- Plugin Spring Boot -->
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <version>${spring.boot.version}</version>
       </plugin>
 
-      <!-- JaCoCo Plugin -->
+      <!-- JaCoCo pour la couverture -->
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
@@ -70,22 +67,12 @@
           </execution>
           <execution>
             <id>report</id>
-            <phase>prepare-package</phase>
+            <phase>test</phase>
             <goals>
               <goal>report</goal>
             </goals>
           </execution>
         </executions>
-      </plugin>
-
-      <!-- Maven Compiler -->
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.11.0</version>
-        <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
-        </configuration>
       </plugin>
     </plugins>
   </build>
