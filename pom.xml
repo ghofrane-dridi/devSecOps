@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.example</groupId>
@@ -10,30 +11,34 @@
   <version>1.0.0</version>
   <packaging>jar</packaging>
 
-  <name>devsecops</name>
-  <description>Projet DevSecOps avec Jenkins, SonarQube, Nexus</description>
+  <name>DevSecOps</name>
+  <description>Projet Spring Boot pour pipeline Jenkins DevSecOps</description>
 
   <properties>
     <java.version>17</java.version>
-    <spring.boot.version>3.2.2</spring.boot.version>
-    <maven.compiler.source>${java.version}</maven.compiler.source>
-    <maven.compiler.target>${java.version}</maven.compiler.target>
+    <spring.boot.version>3.2.5</spring.boot.version>
   </properties>
 
   <dependencies>
-    <!-- Web -->
+    <!-- Spring Boot Web -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
       <version>${spring.boot.version}</version>
     </dependency>
 
-    <!-- Tests -->
+    <!-- Spring Boot Data JPA -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
       <version>${spring.boot.version}</version>
-      <scope>test</scope>
+    </dependency>
+
+    <!-- H2 Database (en mémoire pour tests/dev) -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>runtime</scope>
     </dependency>
 
     <!-- Lombok -->
@@ -42,6 +47,14 @@
       <artifactId>lombok</artifactId>
       <version>1.18.30</version>
       <scope>provided</scope>
+    </dependency>
+
+    <!-- Test -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <version>${spring.boot.version}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -54,11 +67,11 @@
         <version>${spring.boot.version}</version>
       </plugin>
 
-      <!-- JaCoCo pour la couverture -->
+      <!-- Plugin JaCoCo -->
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.10</version>
+        <version>0.8.11</version>
         <executions>
           <execution>
             <goals>
@@ -76,4 +89,5 @@
       </plugin>
     </plugins>
   </build>
+
 </project>
