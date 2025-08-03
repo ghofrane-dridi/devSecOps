@@ -56,6 +56,13 @@ pipeline {
                 sh 'docker build -t ghofranedridi/devsecops:latest .'
             }
         }
+
+        stage('Déployer sur Nexus') {
+            steps {
+                echo '📦 Déploiement sur Nexus...'
+                sh 'mvn deploy'
+            }
+        }
     }
 
     post {
