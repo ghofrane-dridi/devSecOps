@@ -14,7 +14,7 @@
 
     <groupId>com.example</groupId>
     <artifactId>devsecops</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <name>devsecops</name>
 
     <properties>
@@ -23,7 +23,7 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
-    <!-- 🧭 Références vers les dépôts Nexus -->
+    <!-- 💾 Dépôts Nexus -->
     <distributionManagement>
         <repository>
             <id>nexus-releases</id>
