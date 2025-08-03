@@ -51,6 +51,16 @@ pipeline {
             }
         }
 
+        stage('Docker Compose Up') {
+            steps {
+                echo '🚀 Arrêt et lancement avec Docker Compose...'
+                // Supprime les anciens conteneurs sans erreur même s’ils n’existent pas
+                sh 'docker compose down -v || true'
+                // Lance les conteneurs en arrière-plan
+                sh 'docker compose up -d'
+            }
+        }
+
         stage('Construire Docker') {
             steps {
                 sh 'docker build -t ghofranedridi/devsecops:latest .'
