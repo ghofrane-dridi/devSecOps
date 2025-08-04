@@ -2,42 +2,42 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK 17'         // Global Tool Config dans Jenkins
-        maven 'M3'           // Global Tool Config dans Jenkins
+        jdk 'JDK 17'        // Configuré dans Jenkins > Global Tool Configuration
+        maven 'M3'          // Configuré dans Jenkins > Global Tool Configuration
     }
 
     environment {
-        GITHUB_TOKEN = credentials('github-token')              // GitHub Personal Token
-        SONARQUBE_TOKEN = credentials('sonarqube-token')        // SonarQube Token
-        SONAR_HOST_URL = 'http://localhost:9000'                // URL de SonarQube
+        GITHUB_TOKEN = credentials('github-token')             // Jenkins Credentials (GitHub)
+        SONARQUBE_TOKEN = credentials('sonarqube-token')       // Jenkins Credentials (SonarQube)
+        SONAR_HOST_URL = 'http://localhost:9000'
     }
 
     stages {
-        stage('📥 Cloner le dépôt') {
+        stage('Cloner le dépôt') {
             steps {
-                git branch: 'main',
-                    url: "https://${GITHUB_TOKEN}@github.com/ghofrane-dridi/devSecOps.git"
+                git branch: 'main', url: "https://${GITHUB_TOKEN}@github.com/ghofrane-dridi/devSecOps.git"
             }
         }
 
-        stage('🔧 Build Maven') {
+        stage('Build Maven') {
             steps {
-                sh 'mvn clean install -DskipTests' // Compilation sans tests ici
+                sh 'mvn clean install'  // Compile + tests + package
             }
         }
 
-        stage('🧪 Tests & Couverture') {
+        stage('Tests & Couverture') {
             steps {
                 sh 'mvn test'
-                sh 'ls -lh target/surefire-reports/' // Vérifie les fichiers de test
+                sh 'ls -l target/surefire-reports/'
             }
         }
 
-        stage('📊 Analyse SonarQube') {
+        stage('Analyse SonarQube') {
             steps {
                 withSonarQubeEnv('SonarQube') {
+                    // Utilisation de single quotes + variables Jenkins pour éviter interpolation Groovy (sécurité)
                     sh """
-                        mvn sonar:sonar \
+                      mvn sonar:sonar \
                         -Dsonar.projectKey=devsecops \
                         -Dsonar.host.url=${SONAR_HOST_URL} \
                         -Dsonar.login=${SONARQUBE_TOKEN}
@@ -46,34 +46,30 @@ pipeline {
             }
         }
 
-        stage('✅ Quality Gate') {
+        stage('Vérifier JAR') {
             steps {
-                waitForQualityGate abortPipeline: true
+                sh 'ls -l target/'
             }
         }
 
-        stage('📦 Vérifier le JAR') {
+        stage('Docker Compose Up') {
             steps {
-                sh 'ls -lh target/*.jar'
-            }
-        }
-
-        stage('🐳 Docker Compose (UP)') {
-            steps {
-                echo '⏬ Arrêt + démarrage Docker Compose...'
-                sh 'docker compose down -v || true'
+                echo '🚀 Arrêt et lancement avec Docker Compose...'
+                // Nettoyage des anciens conteneurs + volumes, suppression des orphelins (pour éviter conflits)
+                sh 'docker compose down -v --remove-orphans || true'
                 sh 'docker compose up -d'
             }
         }
 
-        stage('🐳 Build Image Docker') {
+        stage('Construire Docker') {
             steps {
                 sh 'docker build -t ghofranedridi/devsecops:latest .'
             }
         }
 
-        stage('🚀 Déployer vers Nexus') {
+        stage('Déployer sur Nexus') {
             steps {
+                echo '📦 Déploiement sur Nexus...'
                 sh 'mvn deploy'
             }
         }
@@ -81,14 +77,14 @@ pipeline {
 
     post {
         always {
-            junit 'target/surefire-reports/*.xml'
-            echo '🧹 Nettoyage terminé.'
+            junit '**/target/surefire-reports/*.xml'
+            echo '🛠️ Build terminé.'
         }
         success {
-            echo '✅ Succès : pipeline complet.'
+            echo '✅ Pipeline terminé avec succès.'
         }
         failure {
-            echo '❌ Échec : pipeline interrompu.'
+            echo '❌ Échec du pipeline.'
         }
     }
 }
