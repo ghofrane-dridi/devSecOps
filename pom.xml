@@ -24,6 +24,7 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
+    <!-- Intégration Nexus -->
     <distributionManagement>
         <repository>
             <id>nexus-releases</id>
@@ -65,7 +66,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- MySQL Connector (avec version) -->
+        <!-- MySQL Connector -->
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
@@ -126,7 +127,7 @@
                 <version>3.11.0.3922</version>
             </plugin>
 
-            <!-- Deploy Plugin (optionnel) -->
+            <!-- Maven Deploy Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
@@ -134,4 +135,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>
