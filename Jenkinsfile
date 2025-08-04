@@ -2,90 +2,74 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK 17'        // Configuré dans Jenkins > Global Tool Configuration
-        maven 'M3'          // Configuré dans Jenkins > Global Tool Configuration
+        jdk 'JDK 17'         // Nom défini dans Jenkins > Global Tool Configuration
+        maven 'M3'           // Idem pour Maven
     }
 
     environment {
-        GITHUB_TOKEN = credentials('github-token')             // Jenkins Credentials ID : github-token
-        SONARQUBE_TOKEN = credentials('sonarqube-token')       // Jenkins Credentials ID : sonarqube-token
-        SONAR_HOST_URL = 'http://localhost:9000'               // URL SonarQube local
+        SONAR_HOST_URL = 'http://localhost:9000'
+        DOCKER_IMAGE = 'devsecops:1.0.1-SNAPSHOT'
+        DOCKER_TAG = '1.0.1-SNAPSHOT'
+        NEXUS_URL = 'http://localhost:8081'
+        NEXUS_REPO = 'maven-releases'
+        NEXUS_CREDENTIALS_ID = 'nexus-credentials' // Crée ce secret dans Jenkins si pas encore fait
     }
 
     stages {
-        stage('Cloner le dépôt') {
+
+        stage('Checkout') {
             steps {
-                git branch: 'main', url: "https://${GITHUB_TOKEN}@github.com/ghofrane-dridi/devSecOps.git"
+                git credentialsId: 'github-token', url: 'https://github.com/ghofrane-dridi/devSecOps.git'
             }
         }
 
-        stage('Build Maven') {
+        stage('Build & Test') {
             steps {
-                sh 'mvn clean install'
+                sh 'mvn clean verify'
             }
         }
 
-        stage('Tests & Couverture') {
-            steps {
-                sh 'mvn test'
-                sh 'ls -l target/surefire-reports/'
-            }
-        }
-
-        stage('Analyse SonarQube') {
+        stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
-                    sh """
-                        mvn sonar:sonar \
-                        -Dsonar.projectKey=devsecops \
-                        -Dsonar.host.url=${SONAR_HOST_URL} \
-                        -Dsonar.login=${SONARQUBE_TOKEN}
-                    """
+                    withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                        sh '''
+                            mvn sonar:sonar \
+                                -Dsonar.projectKey=devsecops \
+                                -Dsonar.host.url=$SONAR_HOST_URL \
+                                -Dsonar.login=$SONAR_TOKEN
+                        '''
+                    }
                 }
             }
         }
 
-        stage('Vérifier JAR') {
+        stage('Quality Gate') {
             steps {
-                sh 'ls -lh target/*.jar || echo "❗ Aucun fichier JAR trouvé."'
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
 
-        stage('Docker Compose Up') {
+        stage('Build Docker Image') {
             steps {
-                echo '🚀 Redémarrage des conteneurs Docker...'
-                sh 'docker compose down -v || true'
-                sh 'docker compose up -d'
-                sh 'docker ps'
+                sh '''
+                    docker build -t $DOCKER_IMAGE .
+                '''
             }
         }
 
-        stage('Construire Docker') {
+        stage('Push to Nexus') {
             steps {
-                echo '🔨 Build de l’image Docker'
-                sh 'docker build -t ghofranedridi/devsecops:latest .'
-                sh 'docker images | grep devsecops'
+                withCredentials([usernamePassword(credentialsId: "${NEXUS_CREDENTIALS_ID}", passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')]) {
+                    sh '''
+                        mvn deploy -DaltDeploymentRepository=${NEXUS_REPO}::default::${NEXUS_URL}/repository/${NEXUS_REPO} \
+                                   -Dnexus.username=$NEXUS_USER \
+                                   -Dnexus.password=$NEXUS_PASS
+                    '''
+                }
             }
-        }
-
-        stage('Déployer sur Nexus') {
-            steps {
-                echo '📦 Déploiement sur Nexus...'
-                sh 'mvn deploy'
-            }
-        }
-    }
-
-    post {
-        always {
-            junit '**/target/surefire-reports/*.xml'
-            echo '🛠️ Build terminé (post-actions).'
-        }
-        success {
-            echo '✅ Pipeline terminé avec succès.'
-        }
-        failure {
-            echo '❌ Le pipeline a échoué.'
         }
     }
 }
