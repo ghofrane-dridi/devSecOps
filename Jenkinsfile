@@ -7,9 +7,9 @@ pipeline {
     }
 
     environment {
-        GITHUB_TOKEN = credentials('github-token')             // Stocké dans Jenkins > Credentials (ID : github-token)
-        SONARQUBE_TOKEN = credentials('sonarqube-token')       // Stocké dans Jenkins > Credentials (ID : sonarqube-token)
-        SONAR_HOST_URL = 'http://localhost:9000'               // URL locale de SonarQube
+        GITHUB_TOKEN = credentials('github-token')             // Jenkins Credentials ID : github-token
+        SONARQUBE_TOKEN = credentials('sonarqube-token')       // Jenkins Credentials ID : sonarqube-token
+        SONAR_HOST_URL = 'http://localhost:9000'               // URL SonarQube local
     }
 
     stages {
@@ -21,7 +21,7 @@ pipeline {
 
         stage('Build Maven') {
             steps {
-                sh 'mvn clean install'  // Compile + Test + Package
+                sh 'mvn clean install'
             }
         }
 
@@ -34,12 +34,12 @@ pipeline {
 
         stage('Analyse SonarQube') {
             steps {
-                withSonarQubeEnv('SonarQube') { // Ce nom doit correspondre à celui configuré dans Jenkins > Manage Jenkins > Configure System
+                withSonarQubeEnv('SonarQube') {
                     sh """
-                    mvn sonar:sonar \
-                      -Dsonar.projectKey=devsecops \
-                      -Dsonar.host.url=${SONAR_HOST_URL} \
-                      -Dsonar.login=${SONARQUBE_TOKEN}
+                        mvn sonar:sonar \
+                        -Dsonar.projectKey=devsecops \
+                        -Dsonar.host.url=${SONAR_HOST_URL} \
+                        -Dsonar.login=${SONARQUBE_TOKEN}
                     """
                 }
             }
@@ -47,21 +47,24 @@ pipeline {
 
         stage('Vérifier JAR') {
             steps {
-                sh 'ls -lh target/*.jar || echo "Aucun fichier JAR trouvé !"'
+                sh 'ls -lh target/*.jar || echo "❗ Aucun fichier JAR trouvé."'
             }
         }
 
         stage('Docker Compose Up') {
             steps {
-                echo '🚀 Arrêt et lancement avec Docker Compose...'
+                echo '🚀 Redémarrage des conteneurs Docker...'
                 sh 'docker compose down -v || true'
                 sh 'docker compose up -d'
+                sh 'docker ps'
             }
         }
 
         stage('Construire Docker') {
             steps {
+                echo '🔨 Build de l’image Docker'
                 sh 'docker build -t ghofranedridi/devsecops:latest .'
+                sh 'docker images | grep devsecops'
             }
         }
 
@@ -76,13 +79,13 @@ pipeline {
     post {
         always {
             junit '**/target/surefire-reports/*.xml'
-            echo '🛠️ Build terminé.'
+            echo '🛠️ Build terminé (post-actions).'
         }
         success {
             echo '✅ Pipeline terminé avec succès.'
         }
         failure {
-            echo '❌ Échec du pipeline.'
+            echo '❌ Le pipeline a échoué.'
         }
     }
 }
