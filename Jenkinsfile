@@ -2,14 +2,14 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK 17'        // Configuré dans Jenkins > Global Tools
-        maven 'M3'          // Configuré dans Jenkins > Global Tools
+        jdk 'JDK 17'        // Configuré dans Jenkins > Global Tool Configuration
+        maven 'M3'          // Configuré dans Jenkins > Global Tool Configuration
     }
 
     environment {
-        GITHUB_TOKEN = credentials('github-token')             // Ajouté dans Jenkins Credentials
-        SONARQUBE_TOKEN = credentials('sonarqube-token')       // Ajouté dans Jenkins Credentials
-        SONAR_HOST_URL = 'http://localhost:9000'
+        GITHUB_TOKEN = credentials('github-token')             // Stocké dans Jenkins > Credentials (ID : github-token)
+        SONARQUBE_TOKEN = credentials('sonarqube-token')       // Stocké dans Jenkins > Credentials (ID : sonarqube-token)
+        SONAR_HOST_URL = 'http://localhost:9000'               // URL locale de SonarQube
     }
 
     stages {
@@ -34,12 +34,12 @@ pipeline {
 
         stage('Analyse SonarQube') {
             steps {
-                withSonarQubeEnv('SonarQube') {
+                withSonarQubeEnv('SonarQube') { // Ce nom doit correspondre à celui configuré dans Jenkins > Manage Jenkins > Configure System
                     sh """
                     mvn sonar:sonar \
-                    -Dsonar.projectKey=devsecops \
-                    -Dsonar.host.url=${SONAR_HOST_URL} \
-                    -Dsonar.login=${SONARQUBE_TOKEN}
+                      -Dsonar.projectKey=devsecops \
+                      -Dsonar.host.url=${SONAR_HOST_URL} \
+                      -Dsonar.login=${SONARQUBE_TOKEN}
                     """
                 }
             }
@@ -47,16 +47,14 @@ pipeline {
 
         stage('Vérifier JAR') {
             steps {
-                sh 'ls -l target/'
+                sh 'ls -lh target/*.jar || echo "Aucun fichier JAR trouvé !"'
             }
         }
 
         stage('Docker Compose Up') {
             steps {
                 echo '🚀 Arrêt et lancement avec Docker Compose...'
-                // Supprime les anciens conteneurs sans erreur même s’ils n’existent pas
                 sh 'docker compose down -v || true'
-                // Lance les conteneurs en arrière-plan
                 sh 'docker compose up -d'
             }
         }
