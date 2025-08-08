@@ -67,6 +67,22 @@ pipeline {
             }
         }
 
+        stage('Docker Push') {
+            steps {
+                echo '📤 Pousser l\'image Docker vers Docker Hub...'
+                withCredentials([usernamePassword(
+                    credentialsId: 'docker-hub-credentials',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                        docker login -u $DOCKER_USER -p $DOCKER_PASS
+                        docker push ghofranedridi/devsecops:latest
+                    '''
+                }
+            }
+        }
+
         stage('Déployer sur Nexus') {
             steps {
                 echo '📦 Déploiement sur Nexus...'
