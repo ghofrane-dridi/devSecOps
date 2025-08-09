@@ -63,7 +63,7 @@ pipeline {
 
         stage('Construire Docker') {
             steps {
-                sh 'docker build -t ghofranedridi/devsecops:latest .'
+                sh 'docker build -t ghofrane028/devsecops:latest .'
             }
         }
 
@@ -77,7 +77,7 @@ pipeline {
                 )]) {
                     sh '''
                         docker login -u $DOCKER_USER -p $DOCKER_PASS
-                        docker push ghofranedridi/devsecops:latest
+                        docker push ghofrane028/devsecops:latest
                     '''
                 }
             }
