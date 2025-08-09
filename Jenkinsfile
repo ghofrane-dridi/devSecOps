@@ -71,7 +71,7 @@ pipeline {
             steps {
                 echo '📤 Pousser l\'image Docker vers Docker Hub...'
                 withCredentials([usernamePassword(
-                    credentialsId: 'docker-hub-credentials',
+                    credentialsId: 'dockerhub',
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
