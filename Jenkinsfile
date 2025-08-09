@@ -35,7 +35,6 @@ pipeline {
         stage('Analyse SonarQube') {
             steps {
                 withSonarQubeEnv('SonarQube') {
-                    // Utilisation de single quotes + variables Jenkins pour éviter interpolation Groovy (sécurité)
                     sh """
                       mvn sonar:sonar \
                         -Dsonar.projectKey=devsecops \
@@ -55,7 +54,6 @@ pipeline {
         stage('Docker Compose Up') {
             steps {
                 echo '🚀 Arrêt et lancement avec Docker Compose...'
-                // Nettoyage des anciens conteneurs + volumes, suppression des orphelins (pour éviter conflits)
                 sh 'docker compose down -v --remove-orphans || true'
                 sh 'docker compose up -d'
             }
@@ -87,6 +85,32 @@ pipeline {
             steps {
                 echo '📦 Déploiement sur Nexus...'
                 sh 'mvn deploy'
+            }
+        }
+
+        stage('📊 Start Monitoring') {
+            steps {
+                echo '📈 Lancement de Prometheus et Grafana pour le monitoring...'
+                sh '''
+                    # Lancer Prometheus (avec fichier prometheus.yml dans le repo)
+                    if [ ! "$(docker ps -aq -f name=prometheus)" ]; then
+                        docker run -d --name prometheus -p 9090:9090 \
+                            -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml \
+                            prom/prometheus
+                    else
+                        docker start prometheus
+                    fi
+
+                    # Lancer Grafana
+                    if [ ! "$(docker ps -aq -f name=grafana)" ]; then
+                        docker run -d --name grafana -p 3000:3000 \
+                            -e GF_SECURITY_ADMIN_USER=admin \
+                            -e GF_SECURITY_ADMIN_PASSWORD=admin \
+                            grafana/grafana
+                    else
+                        docker start grafana
+                    fi
+                '''
             }
         }
     }
